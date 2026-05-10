@@ -20,6 +20,16 @@
 <script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.development.js" integrity="sha384-u6aeetuaXnQ38mYT8rp6sbXaQe3NL9t+IBXmnYxwkUI2Hw4bsp2Wvmx4yRQF1uAm" crossorigin="anonymous"></script>
 <script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
 
+<!-- Local dev override: loads dev.local.js (gitignored) only on localhost,
+     setting window.BH_TILESET_URL to a direct Google URL so Cesium works
+     without the Cloudflare Pages Function. In production dev.local.js does
+     not exist and the proxy at /api/tiles/* is used. -->
+<script>
+  if (location.hostname === "localhost" || location.hostname === "127.0.0.1") {
+    document.write('<script src="dev.local.js"><\/script>');
+  }
+</script>
+
 <!-- Bal'harm: data, i18n, helpers, scene (pure JS, sync) -->
 <script src="src/data/categories.js"></script>
 <script src="src/data/geography.js"></script>

@@ -1,6 +1,7 @@
 .env
 .env.local
 .dev.vars
+dev.local.js
 .wrangler/
 .vercel/
 node_modules/
