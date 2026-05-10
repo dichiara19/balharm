@@ -10,10 +10,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
 (function () {
   // The Google 3D Tiles key is *never* shipped in client JS. Tiles are
   // fetched through a same-origin proxy (Cloudflare Pages Function at
-  // /api/tiles/*) which adds the key server-side from a private env var.
+  // /v1/3dtiles/*) which adds the key server-side from a private env var.
+  // We mount the proxy on the same path Google embeds in its child URIs
+  // so Cesium resolves child tiles back to our origin without rewrites.
   // For local development without the function, set window.BH_TILESET_URL
   // before this file loads to point at a direct Google URL with a dev key.
-  const TILESET_URL = window.BH_TILESET_URL || "/api/tiles/root.json";
+  const TILESET_URL = window.BH_TILESET_URL || "/v1/3dtiles/root.json";
 
   const CENTER = { lng: 13.3614, lat: 38.1157 };
   const BOUNDS = { minLng: 13.27, maxLng: 13.45, minLat: 38.08, maxLat: 38.21 };
