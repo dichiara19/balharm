@@ -34,7 +34,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   // ── OSM footprint fetch (cached) ──────────────────────────────────────
   const CACHE_VERSION = 2;
   const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
-  const OVERPASS_TIMEOUT_MS = 8000;
+  const OVERPASS_TIMEOUT_MS = 18000;
 
   function polygonCentroid(coords) {
     let area = 0, cx = 0, cy = 0;
@@ -106,13 +106,22 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   async function fetchFootprints(subset) {
     const list = subset || LANDMARKS;
     const out = {};
-    await Promise.all(list.map(async (L) => {
-      const fp = await fetchOsmFootprint(L);
-      if (fp) {
-        out[L.key] = fp;
-        console.log(`[Bh] OSM footprint for "${L.key}": ${fp.polygon.length} vertices, centroid ${fp.centroid[1].toFixed(5)},${fp.centroid[0].toFixed(5)}`);
-      }
-    }));
+    // Overpass enforces a per-IP rate limit; running 12 fetches in parallel
+    // makes most of them time out. Run two at a time with a small spacer so
+    // the cache fills cleanly on first visit (subsequent visits are instant).
+    const CONCURRENCY = 2;
+    const SPACER_MS = 700;
+    for (let i = 0; i < list.length; i += CONCURRENCY) {
+      const batch = list.slice(i, i + CONCURRENCY);
+      await Promise.all(batch.map(async (L) => {
+        const fp = await fetchOsmFootprint(L);
+        if (fp) {
+          out[L.key] = fp;
+          console.log(`[Bh] OSM footprint for "${L.key}": ${fp.polygon.length} vertices, centroid ${fp.centroid[1].toFixed(5)},${fp.centroid[0].toFixed(5)}`);
+        }
+      }));
+      if (i + CONCURRENCY < list.length) await new Promise((r) => setTimeout(r, SPACER_MS));
+    }
     return out;
   }
 

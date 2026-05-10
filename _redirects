@@ -1,0 +1,8 @@
+# Cloudflare Pages rewrite rules.
+#
+# Google's root.json returns absolute paths under /v1/3dtiles/* — Cesium
+# resolves them against the page's origin, which lands on the wrong host.
+# We invisibly rewrite those requests onto our /api/tiles/* function so the
+# proxy can forward them to tile.googleapis.com (with the API key injected).
+# Status 200 = rewrite (URL stays unchanged in the browser), not a 301 redirect.
+/v1/3dtiles/*  /api/tiles/v1/3dtiles/:splat  200

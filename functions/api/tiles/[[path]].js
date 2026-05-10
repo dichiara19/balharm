@@ -24,7 +24,13 @@ export async function onRequest({ request, env, params }) {
     return new Response("GOOGLE_3DTILES_KEY env var not configured on this Pages project", { status: 500 });
   }
 
-  const subPath = Array.isArray(params.path) ? params.path.join("/") : (params.path || "root.json");
+  let subPath = Array.isArray(params.path) ? params.path.join("/") : (params.path || "root.json");
+  // Google's root.json hands back absolute paths beginning with /v1/3dtiles/*.
+  // The _redirects file maps those onto this function, so we may receive a
+  // sub-path that already starts with "v1/3dtiles/" — strip it before forwarding.
+  if (subPath.startsWith("v1/3dtiles/")) {
+    subPath = subPath.slice("v1/3dtiles/".length);
+  }
   const upstream = new URL(`${UPSTREAM_BASE}/${subPath}`);
 
   // Forward incoming query parameters (session token included), then add our key.
