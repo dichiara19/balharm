@@ -1,10 +1,9 @@
 /* Bal'harm — Cesium scene factory.
-   Single Google 3D Tileset rendered through a duotone custom shader that
-   already knows about the *reveal regions* (the spotlit landmarks), so we
-   don't need a second clipped tileset to show real colours. OSM footprint
-   centroids refine the reveal centres after they arrive (background fetch).
-   Camera pre-warming during the splash pulls the relevant tiles into cache
-   so the user lands on a fluid scene. */
+   Single Cesium-ion-hosted Google 3D Tileset rendered through a duotone
+   custom shader that already knows about the *reveal regions* (the spotlit
+   landmarks), so we don't need a second clipped tileset to show real colours.
+   OSM footprint centroids refine the reveal centres after they arrive
+   (background fetch). */
 window.Bh = window.Bh || {};
 window.Bh.map = window.Bh.map || {};
 
@@ -20,14 +19,6 @@ window.Bh.map = window.Bh.map || {};
     "quattroCanti", "portaNuova", "portaFelice", "villaGiulia",
     "villinoFlorio", "utveggio", "laCala", "cappuccini",
   ]);
-
-  // Camera viewpoints used to pre-warm the Google tile cache before the
-  // splash hides. They cover the two heroes + a city overview.
-  const PREWARM_HOPS = [
-    { lng: 13.3563, lat: 38.1142, height: 350,  heading: 35,  pitch: -35 }, // Cattedrale close
-    { lng: 13.3578, lat: 38.1207, height: 350,  heading: 0,   pitch: -35 }, // Massimo close
-    { lng: 13.3617, lat: 38.1157, height: 1900, heading: 28,  pitch: -32 }, // city overview
-  ];
 
   function buildScene(host) {
     const categoriesById = CATEGORIES.reduce((m, c) => (m[c.id] = c, m), {});
@@ -69,22 +60,16 @@ window.Bh.map = window.Bh.map || {};
 
     sceneMod.loadBaseTileset(scene, duotoneShader).then((ts) => {
       baseTileset = ts;
-      items.forEach((c) => pins.sampleGroundFor(c, ts));
+      // Sample 50 pins × N points synchronously can block the main thread
+      // for several seconds when tiles are still streaming. Chunk it: 5 pins
+      // per microtask, yielding between batches so the splash + first frame
+      // stay responsive.
+      (function chunkedSample(i) {
+        for (let n = 0; n < 5 && i < items.length; n++, i++) pins.sampleGroundFor(items[i], ts);
+        if (i < items.length) setTimeout(() => chunkedSample(i), 0);
+      })(0);
       ts.tileLoad?.addEventListener?.(() => debouncedReposition());
       ts.initialTilesLoaded?.addEventListener?.(fireInitialLoadOnce);
-
-      // Pre-warm the cache while the splash is still visible.
-      sceneMod.preWarm(viewer, ts, PREWARM_HOPS, 1100).then(() => {
-        viewer.camera.setView({
-          destination: Cesium.Cartesian3.fromDegrees(
-            sceneMod.CENTER.lng - 0.012, sceneMod.CENTER.lat - 0.020, 1900),
-          orientation: {
-            heading: Cesium.Math.toRadians(28),
-            pitch: Cesium.Math.toRadians(-32),
-            roll: 0,
-          },
-        });
-      });
 
       // Refine reveal centres with OSM footprints in the background.
       landmarksMod.fetchFootprints(spotlit).then((footprints) => {
@@ -102,27 +87,37 @@ window.Bh.map = window.Bh.map || {};
         }
         scene.requestRender();
       });
-    }).catch((err) => { console.warn("Google 3D Tiles failed:", err); scene.globe.show = true; });
+    }).catch((err) => { console.warn("Cesium ion 3D Tiles failed:", err); scene.globe.show = true; });
 
     let repoTimer = null;
     function debouncedReposition() {
       if (allLocked) return;
       if (repoTimer) return;
+      // Bumped 1500 → 3000 ms so the heavy sample loop runs at most once every
+      // 3 s during the busy tile-streaming window — keeps interaction smooth.
       repoTimer = setTimeout(() => {
         repoTimer = null;
+        // Chunked, async sampling so a slow tileLoad burst doesn't stall the
+        // main thread. Lights piggyback on the final chunk.
         let pendingPins = 0;
-        items.forEach((c) => {
-          const d = pins.pinData[c.id];
-          if (!d?.sampled) { pins.sampleGroundFor(c, baseTileset); if (!d?.sampled) pendingPins++; }
-        });
-        // Sample rooftops for stage lights too.
-        lightsMod.repositionAll(stageLights, scene, [baseTileset]);
-        const pendingLights = Object.values(stageLights).filter((l) => !l.sampled).length;
-        if (pendingPins === 0 && pendingLights === 0) {
-          allLocked = true;
-          console.log("[Bh] all pins + lights locked; tileLoad listener idle");
-        }
-      }, 1500);
+        (function chunkedReposition(i) {
+          for (let n = 0; n < 5 && i < items.length; n++, i++) {
+            const c = items[i];
+            const d = pins.pinData[c.id];
+            if (!d?.sampled) {
+              pins.sampleGroundFor(c, baseTileset);
+              if (!pins.pinData[c.id]?.sampled) pendingPins++;
+            }
+          }
+          if (i < items.length) { setTimeout(() => chunkedReposition(i), 0); return; }
+          lightsMod.repositionAll(stageLights, scene, [baseTileset]);
+          const pendingLights = Object.values(stageLights).filter((l) => !l.sampled).length;
+          if (pendingPins === 0 && pendingLights === 0) {
+            allLocked = true;
+            console.log("[Bh] all pins + lights locked; tileLoad listener idle");
+          }
+        })(0);
+      }, 3000);
     }
 
     // Click + hover. Stage-light cones are translucent and sit *in front of*

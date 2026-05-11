@@ -8,17 +8,26 @@ window.Bh.map = window.Bh.map || {};
 window.Bh.map.cesium = window.Bh.map.cesium || {};
 
 (function () {
-  // The Google 3D Tiles key is *never* shipped in client JS. Tiles are
-  // fetched through a same-origin proxy (Cloudflare Pages Function at
-  // /v1/3dtiles/*) which adds the key server-side from a private env var.
-  // We mount the proxy on the same path Google embeds in its child URIs
-  // so Cesium resolves child tiles back to our origin without rewrites.
-  // For local development without the function, set window.BH_TILESET_URL
-  // before this file loads to point at a direct Google URL with a dev key.
-  const TILESET_URL = window.BH_TILESET_URL || "/v1/3dtiles/root.json";
+  // Google Photorealistic 3D Tiles are not available directly to EEA-billed
+  // Google Cloud accounts. We instead use Cesium ion's catalogue copy
+  // (asset 2275207), which is delivered through Cesium's own CDN under their
+  // commercial agreement with Google. The access token is set on
+  // window.CESIUM_ION_TOKEN — locally via dev.local.js, in production by the
+  // value hard-coded just below (restricted to balharm domains on the Cesium
+  // ion dashboard, so leaking it doesn't enable use elsewhere).
+  const GOOGLE_3D_TILES_ION_ASSET_ID = 2275207;
+  // Restricted on the Cesium ion dashboard to balharm.com/* and balharm.it/* —
+  // safe to ship in client JS because outside those domains the token is
+  // useless. Add balharm.pages.dev to the allowed URLs there too if you need
+  // to test on the Cloudflare default subdomain before DNS cutover.
+  const PROD_ION_TOKEN = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJqdGkiOiJjYTU1M2Y0Zi1jMjFhLTQxOTAtYmE0Yi1hZGZhYjMxYWI5ODIiLCJpZCI6NDMwMDQxLCJzdWIiOiJkaWNoaWFyYTE5IiwiaXNzIjoiaHR0cHM6Ly9pb24uY2VzaXVtLmNvbSIsImF1ZCI6ImJhbGhhcm0iLCJpYXQiOjE3Nzg0OTcyNDN9.d9ARgtWw3aVDYpXgzNPmC513omOCBWKgaAUhSqhb280";
 
   const CENTER = { lng: 13.3614, lat: 38.1157 };
-  const BOUNDS = { minLng: 13.27, maxLng: 13.45, minLat: 38.08, maxLat: 38.21 };
+  // Tightened from ~15×14 km to ~13×7 km: covers Mondello (north), Cappuccini
+  // (west), Foro Italico (east) and south of the city, but excludes far-away
+  // narrative points (e.g. Targa Florio) that don't need photogrammetric
+  // tiles. Camera is clamped to this rectangle on every postRender frame.
+  const BOUNDS = { minLng: 13.32, maxLng: 13.39, minLat: 38.09, maxLat: 38.21 };
 
   const MAX_REVEALS = 12;
 
@@ -105,10 +114,14 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     cesiumDiv.className = "cesium-stage";
     host.appendChild(cesiumDiv);
 
-    Cesium.Ion.defaultAccessToken = "";
+    Cesium.Ion.defaultAccessToken = window.CESIUM_ION_TOKEN || PROD_ION_TOKEN;
 
-    // Google's recommended parallelism for the photorealistic tile server.
+    // Cesium ion redirects tile fetches to tile.googleapis.com under the
+    // hood, so we still need Google's recommended parallelism on *that*
+    // server, not on the ion endpoint. Also bump the ion endpoint itself in
+    // case future Cesium versions serve tiles directly.
     Cesium.RequestScheduler.requestsByServer["tile.googleapis.com:443"] = 18;
+    Cesium.RequestScheduler.requestsByServer["assets.ion.cesium.com:443"] = 18;
 
     const viewer = new Cesium.Viewer(cesiumDiv, {
       baseLayer: false, baseLayerPicker: false, geocoder: false, homeButton: false,
@@ -132,20 +145,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     scene.skyAtmosphere.show = false;
     scene.fog.enabled = false;
     scene.backgroundColor = Cesium.Color.fromCssColorString("#06112a");
-    const ssc = scene.screenSpaceCameraController;
-    ssc.enableLook = false;
-    ssc.minimumZoomDistance = 250;
-    ssc.maximumZoomDistance = 6000;
-
-    // Desktop interaction follows the Cesium 3D defaults — the same scheme
-    // used by Google Earth and Cesium ion, so the muscle memory is portable:
-    //   Left-drag         → orbit (the map drags around the cursor pivot)
-    //   Right-drag        → zoom (vertical motion)
-    //   Wheel             → zoom
-    //   Middle-drag       → tilt
-    //   Ctrl + left-drag  → tilt (alternative for laptops without middle btn)
-    // Free-look (turn the camera in place) is disabled — useless here.
-    ssc.lookEventTypes = [];
+    // Camera controller: Cesium defaults across the board. Previously we
+    // disabled free-look and clamped zoom distance, but the combined effect
+    // felt wrong (wheel kept spinning at the cap, drag-tilt felt overridden).
+    // Defaults = Cesium ion / Google Earth muscle memory, untouched.
 
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
@@ -156,10 +159,13 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     }
 
     // Initial view: looking due north so the on-screen compass starts aligned
-    // with true north before the user rotates the map.
+    // with true north before the user rotates the map. Lower altitude than
+    // before (1000m vs 1900m) so the initial frame covers a smaller area and
+    // needs ~4× fewer tiles to render — the biggest startup-cost lever after
+    // the SSE knob.
     viewer.camera.setView({
-      destination: Cesium.Cartesian3.fromDegrees(CENTER.lng, CENTER.lat - 0.022, 1900),
-      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-35), roll: 0 },
+      destination: Cesium.Cartesian3.fromDegrees(CENTER.lng, CENTER.lat - 0.008, 1000),
+      orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
     });
 
     scene.postRender.addEventListener(() => {
@@ -178,10 +184,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
 
   function loadBaseTileset(scene, duotoneShader) {
     const isMobile = !!window.Bh?.device?.isMobile;
-    return Cesium.Cesium3DTileset.fromUrl(TILESET_URL, {
+    return Cesium.Cesium3DTileset.fromIonAssetId(GOOGLE_3D_TILES_ION_ASSET_ID, {
       showCreditsOnScreen: false,
-      // Mobile gets a much higher SSE: ~half the tile count, big perf win.
-      maximumScreenSpaceError: isMobile ? 56 : 32,
+      // Balanced bandwidth budget for the Cesium ion free tier (5GB/mo):
+      // desktop 40 is slightly stylised vs. 32; mobile 44 is markedly crisper
+      // than the previous 56 — the earlier setting looked muddy on phones.
+      maximumScreenSpaceError: isMobile ? 44 : 40,
       skipLevelOfDetail: true,
       baseScreenSpaceError: 1024,
       skipScreenSpaceErrorFactor: 16,
@@ -203,26 +211,8 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     });
   }
 
-  // Pre-warm: silently fly the camera to a list of viewpoints so Cesium fetches
-  // their tiles into the cache while the splash is still showing. Returns a
-  // Promise that resolves once the sequence finishes.
-  async function preWarm(viewer, baseTileset, positions, msPerStop = 1100) {
-    if (!baseTileset || !positions?.length) return;
-    for (const p of positions) {
-      viewer.camera.setView({
-        destination: Cesium.Cartesian3.fromDegrees(p.lng, p.lat, p.height),
-        orientation: {
-          heading: Cesium.Math.toRadians(p.heading ?? 28),
-          pitch: Cesium.Math.toRadians(p.pitch ?? -45),
-          roll: 0,
-        },
-      });
-      await new Promise((res) => setTimeout(res, msPerStop));
-    }
-  }
-
   window.Bh.map.cesium.scene = {
-    TILESET_URL, CENTER, BOUNDS, MAX_REVEALS,
-    makeDuotoneShader, setShaderReveals, buildViewer, loadBaseTileset, preWarm,
+    CENTER, BOUNDS, MAX_REVEALS,
+    makeDuotoneShader, setShaderReveals, buildViewer, loadBaseTileset,
   };
 })();

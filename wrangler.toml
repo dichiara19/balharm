@@ -1,9 +1,0 @@
-name = "balharm"
-compatibility_date = "2025-05-01"
-pages_build_output_dir = "."
-
-# Local dev:
-#   1. cp .env.example .dev.vars
-#   2. echo 'GOOGLE_3DTILES_KEY=<your-key>' > .dev.vars
-#   3. npx wrangler pages dev . --port 8788
-# Then open http://localhost:8788 — /api/tiles/* is served by the function.

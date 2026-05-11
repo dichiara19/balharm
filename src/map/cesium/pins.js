@@ -21,11 +21,11 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   // Tune if the reference model uses a different origin.
   const BELL_SCALE       = 14;
   const BELL_HALF_HEIGHT = 7;
-  // Generous clearance: when a pin sits inside a building footprint with an
-  // inner courtyard (Palazzo dei Normanni, Steri, Villino Florio…), Cesium's
-  // sampleHeight returns the courtyard floor instead of the roof. A taller
-  // offset guarantees the bell pops above the surrounding rooflines.
-  const BELL_GROUND_OFFSET = 26;
+  // Clearance above the sampled rooftop. The cross-sampler in
+  // sampleGroundFor already picks the *highest* surrounding point, so we
+  // don't need a huge buffer on top — 8m is enough for the bell to read as
+  // "perched on the roof" without floating like a skyscraper antenna.
+  const BELL_GROUND_OFFSET = 8;
 
   // Per-category coloured aura ("shadow") on the rooftop under each bell.
   // The model itself keeps its native texture; the aura carries the theme.
@@ -275,9 +275,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     // We probe a small cross around the pin and keep the *maximum* valid
     // sample — that gives us the highest roof in the immediate vicinity, so
     // the bell sits above the structure rather than inside it.
+    // Five-point cross (vs. nine): still catches buildings with inner
+    // courtyards by sampling around the pin centre, but cuts main-thread time
+    // per pin by ~45% — important because we run this for 50 pins on every
+    // tile-load batch until all pins are locked.
     const SAMPLE_OFFSETS_M = [
-      [0, 0], [10, 0], [-10, 0], [0, 10], [0, -10],
-      [7, 7], [-7, -7], [7, -7], [-7, 7],
+      [0, 0], [12, 0], [-12, 0], [0, 12], [0, -12],
     ];
     function sampleGroundFor(c, baseTileset) {
       const data = pinData[c.id]; if (!data) return;
