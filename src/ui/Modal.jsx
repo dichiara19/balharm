@@ -99,6 +99,11 @@ window.Bh.ui = window.Bh.ui || {};
     );
   }
 
+  // Memoise the modal so root re-renders triggered by the live camera
+  // heading (compass) don't re-mount the scrim + image + body 30×/sec during
+  // a flyTo — that re-render storm was the flicker the user reported.
+  const MemoModal = React.memo(Modal);
+
   window.Bh.ui.MiniMap = MiniMap;
-  window.Bh.ui.Modal = Modal;
+  window.Bh.ui.Modal = MemoModal;
 })();

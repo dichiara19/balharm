@@ -152,11 +152,8 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
 
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
-    // On mobile, render at 0.85× the device pixel ratio. Visually almost
-    // identical on retina displays but cuts fillrate by ~25%.
-    if (window.Bh?.device?.isMobile) {
-      viewer.resolutionScale = 0.85;
-    }
+    // Mobile renders at full device pixel ratio — the previous 0.85× setting
+    // made the photogrammetry look muddy on retina screens.
 
     // Initial view: looking due north so the on-screen compass starts aligned
     // with true north before the user rotates the map. Lower altitude than
@@ -186,10 +183,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     const isMobile = !!window.Bh?.device?.isMobile;
     return Cesium.Cesium3DTileset.fromIonAssetId(GOOGLE_3D_TILES_ION_ASSET_ID, {
       showCreditsOnScreen: false,
-      // Balanced bandwidth budget for the Cesium ion free tier (5GB/mo):
-      // desktop 40 is slightly stylised vs. 32; mobile 44 is markedly crisper
-      // than the previous 56 — the earlier setting looked muddy on phones.
-      maximumScreenSpaceError: isMobile ? 44 : 40,
+      // Same SSE on mobile and desktop — the previous mobile bump made
+      // photogrammetry look like a smear. Bandwidth budget is controlled
+      // primarily by the Cesium-ion-side bounds + zoom range instead.
+      maximumScreenSpaceError: 32,
       skipLevelOfDetail: true,
       baseScreenSpaceError: 1024,
       skipScreenSpaceErrorFactor: 16,

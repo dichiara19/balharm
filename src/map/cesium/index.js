@@ -163,12 +163,22 @@ window.Bh.map = window.Bh.map || {};
     // ── Heading tracking ───────────────────────────────────────────────────
     // Push the current camera heading (degrees) to the consumer whenever the
     // camera moves. Used to keep the on-screen compass aligned with true N.
+    // The native event fires at up to 60 Hz during flyTo, which was causing
+    // a cascade of React re-renders on the modal & cornice mid-flight — we
+    // rAF-throttle here so at most one update per animation frame reaches
+    // React, and raise the no-op threshold so jitter doesn't trigger work.
     let lastHeadingDeg = -1;
+    let rafPending = false;
     function emitHeading() {
-      const h = Cesium.Math.toDegrees(viewer.camera.heading);
-      if (Math.abs(h - lastHeadingDeg) < 0.25) return;
-      lastHeadingDeg = h;
-      onHeadingCb && onHeadingCb(h);
+      if (rafPending) return;
+      rafPending = true;
+      requestAnimationFrame(() => {
+        rafPending = false;
+        const h = Cesium.Math.toDegrees(viewer.camera.heading);
+        if (Math.abs(h - lastHeadingDeg) < 0.5) return;
+        lastHeadingDeg = h;
+        onHeadingCb && onHeadingCb(h);
+      });
     }
     viewer.camera.changed.addEventListener(emitHeading);
     setTimeout(emitHeading, 0);

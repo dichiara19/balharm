@@ -147,6 +147,10 @@
       }
     }, [modalId, items]);
 
+    // Stable callback so the memoised Modal doesn't re-render on every
+    // root re-render (compass heading ticks during a flyTo, etc.).
+    const closeModal = useCallback(() => select(null), [select]);
+
     const onShare = useCallback((item) => {
       const url = `${location.origin}${location.pathname}#c=${item.id}&lang=${lang}`;
       const text = `${item[`title_${lang}`]} — ${item[`body_${lang}`]}`;
@@ -247,7 +251,7 @@
         )}
 
         {modalItem && !isMobile && (
-          <Modal item={modalItem} onClose={() => select(null)} lang={lang}
+          <Modal item={modalItem} onClose={closeModal} lang={lang}
                  total={items.length} onShare={onShare} sharedFlash={shared}/>
         )}
 
@@ -263,7 +267,7 @@
                        closeOnSwipeDown={true}
                        onSnap={setModalSheetSnap}
                        className="bh-modal-sheet">
-            <Modal item={modalItem} onClose={() => select(null)} lang={lang}
+            <Modal item={modalItem} onClose={closeModal} lang={lang}
                    total={items.length} onShare={onShare} sharedFlash={shared}
                    mobile={true} />
           </BottomSheet>

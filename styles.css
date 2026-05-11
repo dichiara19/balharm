@@ -800,6 +800,19 @@ body {
    =========================================================================== */
 html.is-mobile body { font-size: 15px; }
 
+/* Hide the decorative arabesque frame on mobile — designed for landscape
+   16:9 desktop framings, looks awkwardly shrunken on a portrait phone. */
+html.is-mobile .cornice { display: none; }
+
+/* Hide hint pill on mobile — drawer + map UI already convey the gestures. */
+html.is-mobile .hint { display: none; }
+
+/* Hide MiniMap inside the curiosity modal on mobile — it sits inside .img
+   for the absolute-positioned desktop overlay, on mobile the layout
+   overflowed and the OSM tiles bled across the image. The modal already
+   shows the coords + "Open in map" link, the preview is non-essential. */
+html.is-mobile .bh-modal-sheet .modal-mobile .mini-map { display: none; }
+
 html.is-mobile .topbar {
   padding: 18px 22px;
 }
