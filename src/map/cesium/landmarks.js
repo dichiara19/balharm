@@ -18,8 +18,8 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     { key: "portaNuova",   name: "Porta Nuova",                 lng: 13.3527, lat: 38.1121, radius: 45 },
     { key: "portaFelice",  name: "Porta Felice",                lng: 13.3713, lat: 38.1196, radius: 45 },
     { key: "villaGiulia",  name: "Villa Giulia",                lng: 13.3756, lat: 38.1135, radius: 90 },
-    { key: "villinoFlorio",name: "Villino Florio all'Olivuzza", lng: 13.3447, lat: 38.1378, radius: 60 },
-    { key: "utveggio",     name: "Castello Utveggio",           lng: 13.3557, lat: 38.1521, radius: 55 },
+    { key: "villinoFlorio",name: "Villino Florio all'Olivuzza", lng: 13.3436586, lat: 38.1196538, radius: 60 },
+    { key: "utveggio",     name: "Castello Utveggio",           lng: 13.355635, lat: 38.152016, radius: 70, altitude: 400 },
     { key: "laCala",       name: "La Cala",                     lng: 13.3698, lat: 38.1212, radius: 110 },
     { key: "cappuccini",   name: "Catacombe dei Cappuccini",    lng: 13.3392, lat: 38.1118, radius: 80 },
     { key: "fontanaPretoria", name: "Fontana Pretoria",         lng: 13.3621, lat: 38.1155, radius: 18 },
@@ -28,11 +28,11 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     { key: "eremiti",      name: "San Giovanni degli Eremiti",  lng: 13.3517, lat: 38.1133, radius: 40 },
     { key: "palatina",     name: "Cappella Palatina",           lng: 13.3530, lat: 38.1117, radius: 35 },
     { key: "ziso",         name: "Castello della Zisa",         lng: 13.3416, lat: 38.1255, radius: 55 },
-    { key: "cinese",       name: "Palazzina Cinese",            lng: 13.3555, lat: 38.1235, radius: 50 },
+    { key: "cinese",       name: "Palazzina Cinese",            lng: 13.3303277, lat: 38.1667313, radius: 80 },
   ];
 
   // ── OSM footprint fetch (cached) ──────────────────────────────────────
-  const CACHE_VERSION = 2;
+  const CACHE_VERSION = 3;
   const OVERPASS_URL = "https://overpass-api.de/api/interpreter";
   const OVERPASS_TIMEOUT_MS = 18000;
 
@@ -103,6 +103,23 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     }
   }
 
+  // Synchronous companion of fetchFootprints — reads only localStorage, no
+  // network. Lets the first frame paint reveals + lights at the already-
+  // cached OSM centroid instead of the hard-coded LANDMARKS coord, killing
+  // the visible "snap" repeat visitors saw a frame or two after open.
+  function getCachedFootprintsSync(subset) {
+    const list = subset || LANDMARKS;
+    const out = {};
+    for (const L of list) {
+      const cacheKey = `bh.osm.v${CACHE_VERSION}.${L.key}`;
+      try {
+        const cached = localStorage.getItem(cacheKey);
+        if (cached) out[L.key] = JSON.parse(cached);
+      } catch (e) {}
+    }
+    return out;
+  }
+
   async function fetchFootprints(subset) {
     const list = subset || LANDMARKS;
     const out = {};
@@ -126,19 +143,22 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   }
 
   // Build reveal configs (centre ECEF + radius metres) for the shader.
-  // `roofH` defaults to 30m above sea level; later sampling can update it
-  // — the centre Z drift only matters when very close to the roof.
+  // `roofH` defaults to 35m above sea level (good for the sea-level core of
+  // Palermo); landmarks on hills/cliffs set their own L.altitude so the
+  // shader sphere actually intersects the building. Castello Utveggio at
+  // ~400m on Monte Pellegrino is the headline case.
   function makeRevealConfigs(landmarks, footprintsByKey, defaultRoofH = 35) {
     return landmarks.map((L) => {
       const fp = footprintsByKey?.[L.key];
       const lng = fp ? fp.centroid[0] : L.lng;
       const lat = fp ? fp.centroid[1] : L.lat;
+      const roofH = (typeof L.altitude === "number") ? L.altitude : defaultRoofH;
       // Generously oversize the reveal radius so the no-duotone zone
       // visibly covers the whole building and not just its centre.
       const radius = L.radius * 1.3;
       return {
         key: L.key,
-        centre: Cesium.Cartesian3.fromDegrees(lng, lat, defaultRoofH),
+        centre: Cesium.Cartesian3.fromDegrees(lng, lat, roofH),
         radius,
       };
     });
@@ -146,7 +166,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
 
   window.Bh.map.cesium.landmarks = {
     LANDMARKS,
-    polygonCentroid, fetchOsmFootprint, fetchFootprints,
+    polygonCentroid, fetchOsmFootprint, fetchFootprints, getCachedFootprintsSync,
     makeRevealConfigs,
   };
 })();

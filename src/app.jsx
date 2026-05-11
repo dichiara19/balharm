@@ -38,7 +38,12 @@
     const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
     const [tour, setTour] = useState(null);
     const [shared, setShared] = useState(false);
-    const [audioOn, setAudioOn] = useAmbientAudio();
+    // Try to start the ambient audio as the splash appears, on both
+    // platforms — it pulls the user into the world before the map is even
+    // visible. On mobile the browser will block the initial play() (no
+    // gesture yet); the catch handler in audio.js auto-retries on the very
+    // first pointerdown, so any tap kicks it off.
+    const [audioOn, setAudioOn] = useAmbientAudio(true);
     const [loading, setLoading] = useState(true);
     const [heading, setHeading] = useState(0);
     const [loaderKw, setLoaderKw] = useState(0);

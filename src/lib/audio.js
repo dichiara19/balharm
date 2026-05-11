@@ -11,11 +11,11 @@ window.Bh.lib = window.Bh.lib || {};
   const FADE_IN_MS = 1800;
   const FADE_OUT_MS = 700;
 
-  function useAmbientAudio() {
-    // Default on — the ambience is part of the experience. If the browser
-    // blocks autoplay (no gesture yet), play() rejects silently and the
-    // first user click anywhere on the page will retry it.
-    const [on, setOn] = useState(true);
+  function useAmbientAudio(initialOn = true) {
+    // Callers pass `false` on mobile so we don't even attempt autoplay there
+    // (mobile browsers block it permanently after the first refusal). The
+    // mobile UI shows a small consent popup post-splash instead.
+    const [on, setOn] = useState(initialOn);
     const audioRef = useRef(null);
     const fadeRef = useRef(0);
     const retryRef = useRef(null);

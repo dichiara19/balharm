@@ -57,8 +57,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     const { lng, lat, radius, key } = landmark;
     const id = `light-${key}`;
 
-    const initSourceY = DEFAULT_ROOF + cfg.sourceOffsetY;
-    const initTargetY = DEFAULT_ROOF + cfg.targetOffsetY;
+    // Use the landmark's expected altitude as the initial guess so cliffs /
+    // hilltops (Castello Utveggio at ~400 m) don't ghost at sea level for a
+    // few frames before the sampleHeight result lands.
+    const initRoof = (typeof landmark.altitude === "number") ? landmark.altitude : DEFAULT_ROOF;
+    const initSourceY = initRoof + cfg.sourceOffsetY;
+    const initTargetY = initRoof + cfg.targetOffsetY;
     const centreY = (initSourceY + initTargetY) / 2;
     const coneLen = initSourceY - initTargetY;
     const bottomR = radius * cfg.bottomScale;
@@ -112,7 +116,9 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   function reposition(light) {
     const { lng, lat } = light.landmark;
     const cfg = light.cfg;
-    const roof = light.roofH != null ? light.roofH : DEFAULT_ROOF;
+    const roof = light.roofH != null
+      ? light.roofH
+      : (typeof light.landmark.altitude === "number" ? light.landmark.altitude : DEFAULT_ROOF);
     const sourceY = roof + cfg.sourceOffsetY;
     const targetY = roof + cfg.targetOffsetY;
     const centreY = (sourceY + targetY) / 2;
@@ -134,7 +140,8 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       let h;
       try { h = scene.sampleHeight(cart, ts); }
       catch (e) { h = undefined; }
-      if (h === undefined || h === null || isNaN(h) || h > 250 || h < -50) return;
+      // Cap 700 m to cover Castello Utveggio / Monte Pellegrino summits.
+      if (h === undefined || h === null || isNaN(h) || h > 700 || h < -50) return;
       light.roofH = h;
       light.sampled = true;
       reposition(light);

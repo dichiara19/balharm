@@ -109,7 +109,7 @@ window.Bh.data.CURIOSITIES = [
     body_en: "Palermo was the first city on Earth with two opera houses.",
     img: null, source: null },
 
-  { id: 15, cat: "arch", year: 1799, lat: 38.1235, lng: 13.3555,
+  { id: 15, cat: "arch", year: 1799, lat: 38.1667313, lng: 13.3303277,
     title_it: "La Palazzina Cinese",
     title_en: "The Chinese Pavilion",
     body_it: "Unico edificio in Europa in stile cinese.",
@@ -351,7 +351,7 @@ window.Bh.data.CURIOSITIES = [
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/24/Palermo-Palazzo-Reale-bjs-2.jpg/800px-Palermo-Palazzo-Reale-bjs-2.jpg",
     source: "Wikimedia Commons — Palazzo dei Normanni" },
 
-  { id: 48, cat: "art", year: 1900, lat: 38.1378, lng: 13.3447,
+  { id: 48, cat: "art", year: 1900, lat: 38.1196538, lng: 13.3436586,
     title_it: "Il Liberty palermitano",
     title_en: "Palermo's own Liberty",
     body_it: "Palermo vanta una scuola Liberty autonoma, non un'imitazione di quella francese.",

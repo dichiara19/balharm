@@ -219,6 +219,19 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
           minimumPixelSize: 32,
           maximumScale: BELL_SCALE * 5,
           runAnimations: false,
+          // Keep the glTF's PBR shading visible — earlier we forced MIX with
+          // a flat gold, which averaged lit and shaded pixels together and
+          // killed the relief. Now: a gentle warm light multiplier so the
+          // bronze surface still feels metallic and shows highlights, plus
+          // a HIGHLIGHT-mode tint at low amount (multiplicative, preserves
+          // dynamic range). The silhouette gives a thin outline against the
+          // dark duotone backdrop without compromising shading.
+          lightColor: new Cesium.Cartesian3(1.6, 1.5, 1.2),
+          colorBlendMode: Cesium.ColorBlendMode.HIGHLIGHT,
+          color: Cesium.Color.fromCssColorString("#f6deb0"),
+          colorBlendAmount: 0.2,
+          silhouetteColor: Cesium.Color.fromCssColorString("#fff5d8"),
+          silhouetteSize: 1.0,
         },
       });
       entity.curiosityId = c.id;
@@ -295,7 +308,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
         let h;
         try { h = scene.sampleHeight(cart, [baseTileset]); }
         catch (e) { continue; }
-        if (h === undefined || h === null || isNaN(h) || h > 250 || h < -50) continue;
+        // Cap of 700 m allows Castello Utveggio (~400 m on Monte Pellegrino)
+        // and Monte Pellegrino itself (~600 m) while still rejecting Cesium's
+        // garbage sample values that crop up while tiles are still streaming.
+        if (h === undefined || h === null || isNaN(h) || h > 700 || h < -50) continue;
         if (h > bestH) bestH = h;
       }
       if (bestH === -Infinity) return;

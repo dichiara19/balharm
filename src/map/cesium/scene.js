@@ -145,10 +145,40 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     scene.skyAtmosphere.show = false;
     scene.fog.enabled = false;
     scene.backgroundColor = Cesium.Color.fromCssColorString("#06112a");
-    // Camera controller: Cesium defaults across the board. Previously we
-    // disabled free-look and clamped zoom distance, but the combined effect
-    // felt wrong (wheel kept spinning at the cap, drag-tilt felt overridden).
-    // Defaults = Cesium ion / Google Earth muscle memory, untouched.
+
+    // Replace the default sun-based light (which is below the horizon at
+    // night-local-time and leaves glTF models pitch-black) with a constant
+    // warm-key directional light. Intensity 2.2 keeps the highlights from
+    // saturating to pure white — that's what made the bells look like flat
+    // cardboard. The duotone tileset shader ignores this anyway, only the
+    // bells (and any future glTF entities) get a key light.
+    const keyDir = new Cesium.Cartesian3(0.45, 0.55, -0.7);
+    Cesium.Cartesian3.normalize(keyDir, keyDir);
+    scene.light = new Cesium.DirectionalLight({
+      direction: keyDir,
+      intensity: 2.2,
+      color: Cesium.Color.fromCssColorString("#ffe9b8"),
+    });
+    // Camera controller: mostly Cesium defaults. Two tweaks:
+    //
+    //  • maximumZoomDistance = 5000 m → frames the whole Palermo basin
+    //    (sea ↔ Monte Pellegrino) and stops the wheel before it ascends to
+    //    orbital altitudes and triggers a flood of low-LOD tile loads.
+    //
+    //  • the three minimum-height thresholds are forced to 0. By default
+    //    Cesium switches between "pick the cursor's terrain depth" mode and
+    //    "use the globe ellipsoid as pivot" mode based on altitude. At our
+    //    300-5000 m range we sit in pick mode, where the rotation speed
+    //    follows the distance from camera to the picked point. When the
+    //    cursor lands on the empty backdrop, the picked point is the far-
+    //    away globe surface → each pixel = tiny angle → drag feels frozen.
+    //    Forcing the thresholds to 0 keeps it in trackball mode always, so
+    //    rotation speed is consistent no matter where the cursor lands.
+    const ssc = scene.screenSpaceCameraController;
+    ssc.maximumZoomDistance = 5000;
+    ssc.minimumPickingTerrainHeight = 0;
+    ssc.minimumCollisionTerrainHeight = 0;
+    ssc.minimumTrackBallHeight = 0;
 
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
@@ -165,6 +195,17 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
     });
 
+    // Cesium pitch convention: 0 = looking flat at the horizon, negative =
+    // looking down (toward the ground), positive = looking up (toward sky).
+    // Ctrl+Left-drag in the default controller can tilt past 0 → the camera
+    // ends up looking at the sky, and a small forward movement then plants
+    // it inside the photogrammetry. Clamp the pitch in [-85°, -3°]:
+    //   • lower limit keeps a couple of degrees from "straight down" — that
+    //     vertical gimbal feels vertiginous and easy to flip past
+    //   • upper limit -3° is always at least slightly looking down → no sky,
+    //     no underground
+    const MIN_PITCH = Cesium.Math.toRadians(-85);
+    const MAX_PITCH = Cesium.Math.toRadians(-3);
     scene.postRender.addEventListener(() => {
       const carto = Cesium.Cartographic.fromCartesian(viewer.camera.position);
       const lng = Cesium.Math.toDegrees(carto.longitude), lat = Cesium.Math.toDegrees(carto.latitude);
@@ -174,6 +215,15 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       if (lat < BOUNDS.minLat) { ca = BOUNDS.minLat; changed = true; }
       if (lat > BOUNDS.maxLat) { ca = BOUNDS.maxLat; changed = true; }
       if (changed) viewer.camera.position = Cesium.Cartesian3.fromDegrees(cl, ca, carto.height);
+
+      const p = viewer.camera.pitch;
+      if (p > MAX_PITCH || p < MIN_PITCH) {
+        const clamped = Math.max(MIN_PITCH, Math.min(MAX_PITCH, p));
+        viewer.camera.setView({
+          destination: viewer.camera.position,
+          orientation: { heading: viewer.camera.heading, pitch: clamped, roll: 0 },
+        });
+      }
     });
 
     return { viewer, scene };
