@@ -4,7 +4,7 @@ window.Bh.i18n = window.Bh.i18n || {};
 
 window.Bh.i18n.COPY = {
   it: {
-    subtitle: "50 meraviglie · città-mondo",
+    subtitle: "50 curiosità di Palermo",
     filters: "Filtra per tema",
     timeline: "Linea del tempo",
     timelineYear: "Tutte le epoche",
@@ -47,7 +47,7 @@ window.Bh.i18n.COPY = {
     modeDay: "Giorno",
   },
   en: {
-    subtitle: "50 wonders · a city of worlds",
+    subtitle: "50 curiosities about Palermo",
     filters: "Filter by theme",
     timeline: "Timeline",
     timelineYear: "All eras",
@@ -60,7 +60,7 @@ window.Bh.i18n.COPY = {
     locate: "Locate me",
     locating: "Locating…",
     locationDenied: "Location denied",
-    locationOff: "Turn on geolocation to discover wonders around you.",
+    locationOff: "Turn on geolocation to discover curiosities around you.",
     distance: "{d} from your position",
     share: "Share",
     shared: "Link copied",
