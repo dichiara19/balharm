@@ -11,16 +11,24 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
 (function () {
   const LANDMARKS = [
     { key: "cattedrale",   name: "Cattedrale di Palermo",       lng: 13.3563, lat: 38.1142, radius: 95 },
-    { key: "massimo",      name: "Teatro Massimo",              lng: 13.3578, lat: 38.1207, radius: 90 },
+    { key: "massimo",      name: "Teatro Massimo",              lng: 13.3571, lat: 38.1202, radius: 95 },
     { key: "normanni",     name: "Palazzo dei Normanni",        lng: 13.3530, lat: 38.1115, radius: 120 },
     { key: "politeama",    name: "Teatro Politeama Garibaldi",  lng: 13.3568, lat: 38.1252, radius: 75 },
     { key: "quattroCanti", name: "Quattro Canti",               lng: 13.3615, lat: 38.1157, radius: 85 },
     { key: "portaNuova",   name: "Porta Nuova",                 lng: 13.3527, lat: 38.1121, radius: 45 },
     { key: "portaFelice",  name: "Porta Felice",                lng: 13.3713, lat: 38.1196, radius: 45 },
     { key: "villaGiulia",  name: "Villa Giulia",                lng: 13.3756, lat: 38.1135, radius: 90 },
+    { key: "villaBonanno", name: "Villa Bonanno",               lng: 13.3552, lat: 38.1124, radius: 90 },
     { key: "villinoFlorio",name: "Villino Florio all'Olivuzza", lng: 13.3436586, lat: 38.1196538, radius: 60 },
     { key: "utveggio",     name: "Castello Utveggio",           lng: 13.355635, lat: 38.152016, radius: 70, altitude: 400 },
-    { key: "laCala",       name: "La Cala",                     lng: 13.3698, lat: 38.1212, radius: 110 },
+    // On Monte Pellegrino — like utveggio, needs an altitude so the reveal
+    // sphere sits up on the mountain (~447 m) instead of down at sea level.
+    { key: "santaRosalia", name: "Santuario di Santa Rosalia",  lng: 13.3518, lat: 38.1680, radius: 75, altitude: 500 },
+    // La Cala is a large open harbour basin: the OSM-named feature centroid
+    // sits on open water, throwing the reveal seaward. This hand-picked centre
+    // on the inner quay frames the basin as expected; the wide radius covers
+    // both the promenade and the water.
+    { key: "laCala",       name: "La Cala",                     lng: 13.367124, lat: 38.119174, radius: 150 },
     { key: "cappuccini",   name: "Catacombe dei Cappuccini",    lng: 13.3392, lat: 38.1118, radius: 80 },
     { key: "fontanaPretoria", name: "Fontana Pretoria",         lng: 13.3621, lat: 38.1155, radius: 18 },
     { key: "martorana",    name: "Santa Maria dell'Ammiraglio", lng: 13.3624, lat: 38.1149, radius: 28 },

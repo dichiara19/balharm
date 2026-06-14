@@ -9,6 +9,7 @@
   const { fmtYear } = window.Bh.lib.format;
   const { COPY } = window.Bh.i18n;
   const { CURIOSITIES } = window.Bh.data;
+  const { track, EVENTS } = window.Bh.lib.analytics;
 
   function readInitialLang() {
     const m = location.hash.match(/lang=(it|en)/);
@@ -45,7 +46,9 @@
     // first pointerdown, so any tap kicks it off.
     const [audioOn, setAudioOn] = useAmbientAudio(true);
     const [loading, setLoading] = useState(true);
-    const [heading, setHeading] = useState(0);
+    // Compass: driven imperatively (no React state) so camera rotation never
+    // re-renders the tree. app writes the rotation straight to the SVG <g>.
+    const compassRef = useRef(null);
     const [loaderKw, setLoaderKw] = useState(0);
     const [loaderFade, setLoaderFade] = useState(false);
     const [drawerOpen, setDrawerOpen] = useState(true);   // mobile only
@@ -87,6 +90,34 @@
 
     useEffect(() => { localStorage.setItem("bh.lang", lang); }, [lang]);
 
+    // --- Analytics: state-change events. Each effect skips its initial mount
+    // so we record genuine user actions, not React's first commit. ---
+    const readyTracked = useRef(false);
+    useEffect(() => {
+      if (!loading && !readyTracked.current) {
+        readyTracked.current = true;
+        track(EVENTS.APP_READY, { platform: isMobile ? "mobile" : "desktop", lang });
+      }
+    }, [loading]);
+
+    const langInit = useRef(true);
+    useEffect(() => {
+      if (langInit.current) { langInit.current = false; return; }
+      track(EVENTS.LANG_CHANGE, { lang });
+    }, [lang]);
+
+    const audioInit = useRef(true);
+    useEffect(() => {
+      if (audioInit.current) { audioInit.current = false; return; }
+      track(EVENTS.AUDIO_TOGGLE, { on: audioOn });
+    }, [audioOn]);
+
+    const filterInit = useRef(true);
+    useEffect(() => {
+      if (filterInit.current) { filterInit.current = false; return; }
+      track(EVENTS.FILTER_CHANGE, { count: filterCats.length, cats: filterCats.join(",") });
+    }, [filterCats]);
+
     // Loader keyword rotation with cross-fade.
     useEffect(() => {
       if (!loading) return;
@@ -120,7 +151,10 @@
         setHoverId(id);
         if (id) setHoverPos({ x, y });
       });
-      sceneRef.current.onHeading?.((deg) => setHeading(deg));
+      sceneRef.current.onHeading?.((deg) => {
+        const g = compassRef.current;
+        if (g) g.setAttribute("transform", `translate(800,450) rotate(${-deg})`);
+      });
       // Sync the initial audio state.
       sceneRef.current.setAudioEnabled?.(audioOn);
       // Hide the splash when (a) the first batch of Google 3D tiles is on screen
@@ -148,7 +182,10 @@
     useEffect(() => {
       if (modalId) {
         const c = items.find(x => x.id === modalId);
-        if (c) sceneRef.current?.animateTo(c);
+        if (c) {
+          sceneRef.current?.animateTo(c);
+          track(EVENTS.CURIOSITY_OPEN, { id: c.id, title: c.title_it, cat: c.cat, year: c.year });
+        }
       }
     }, [modalId, items]);
 
@@ -164,25 +201,41 @@
       } else if (navigator.clipboard) {
         navigator.clipboard.writeText(url).catch(() => {});
       }
+      track(EVENTS.CURIOSITY_SHARE, {
+        id: item.id, title: item.title_it,
+        method: navigator.share ? "native" : "clipboard",
+      });
       setShared(true);
       setTimeout(() => setShared(false), 1600);
     }, [lang]);
+
+    // Geolocation → 3D "you are here" star in the scene (and clear it when the
+    // visitor stops sharing / leaves the area).
+    const onLocate = useCallback((here, opts) => {
+      sceneRef.current?.setUserPosition?.(here, opts);
+    }, []);
+    const onClearLocate = useCallback(() => {
+      sceneRef.current?.clearUserPosition?.();
+    }, []);
 
     // Tour — modal opens immediately during a guided tour (no delay).
     const tourList = filtered;
     const startTour = () => {
       if (tourList.length === 0) return;
       setTour(0); select(tourList[0].id);
+      track(EVENTS.TOUR_START, { count: tourList.length });
     };
     const nextTour = () => {
       const next = (tour + 1) % tourList.length;
       setTour(next); select(tourList[next].id);
+      track(EVENTS.TOUR_STEP, { dir: "next", index: next });
     };
     const prevTour = () => {
       const next = (tour - 1 + tourList.length) % tourList.length;
       setTour(next); select(tourList[next].id);
+      track(EVENTS.TOUR_STEP, { dir: "prev", index: next });
     };
-    const exitTour = () => { setTour(null); select(null); };
+    const exitTour = () => { setTour(null); select(null); track(EVENTS.TOUR_EXIT); };
     const onTourToggle = () => tour === null ? startTour() : exitTour();
 
     // Keyboard
@@ -208,7 +261,7 @@
     return (
       <div id="stage" data-screen-label="Bal'harm" className={tour !== null ? "tour-mode" : ""}>
         <div id="three-root" ref={threeHostRef} />
-        <Cornice heading={heading} />
+        <Cornice compassRef={compassRef} />
 
         <TopBar lang={lang} setLang={setLang}
                 audioOn={audioOn} setAudioOn={setAudioOn}
@@ -218,7 +271,8 @@
           <>
             <Filters lang={lang} active={filterCats} setActive={setFilterCats} counts={counts}/>
             <div className="aux-stack">
-              <GeoCard lang={lang} items={items} onSelect={(id) => select(id)}/>
+              <GeoCard lang={lang} items={items} onSelect={(id) => select(id)}
+                       onLocate={onLocate} onClearLocate={onClearLocate}/>
             </div>
           </>
         )}
@@ -231,7 +285,8 @@
                        className="bh-drawer">
             <div className="drawer-content">
               <Filters lang={lang} active={filterCats} setActive={setFilterCats} counts={counts}/>
-              <GeoCard lang={lang} items={items} onSelect={(id) => select(id)}/>
+              <GeoCard lang={lang} items={items} onSelect={(id) => select(id)}
+                       onLocate={onLocate} onClearLocate={onClearLocate}/>
             </div>
           </BottomSheet>
         )}

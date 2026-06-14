@@ -18,7 +18,48 @@ window.Bh.map = window.Bh.map || {};
     "cattedrale", "massimo", "normanni", "politeama",
     "quattroCanti", "portaNuova", "portaFelice", "villaGiulia",
     "villinoFlorio", "utveggio", "laCala", "cappuccini",
+    "villaBonanno", "santaRosalia",
   ]);
+
+  // ── "You are here" marker sprites ─────────────────────────────────────────
+  // A gold 8-point star (mirrors the app's Star mark) floats over the visitor's
+  // position, with a soft ground aura. Both are rasterised once to data URLs.
+  let _userStarUrl = null;
+  function userStarImage() {
+    if (_userStarUrl) return _userStarUrl;
+    const S = 128, cv = document.createElement("canvas"); cv.width = cv.height = S;
+    const ctx = cv.getContext("2d");
+    const cx = S / 2, cy = S / 2, spikes = 8, rOut = S * 0.45, rIn = S * 0.19;
+    ctx.beginPath();
+    for (let i = 0; i < spikes * 2; i++) {
+      const r = i % 2 === 0 ? rOut : rIn;
+      const a = (i / (spikes * 2)) * Math.PI * 2 - Math.PI / 2;
+      const x = cx + Math.cos(a) * r, y = cy + Math.sin(a) * r;
+      i === 0 ? ctx.moveTo(x, y) : ctx.lineTo(x, y);
+    }
+    ctx.closePath();
+    const g = ctx.createRadialGradient(cx, cy, 2, cx, cy, rOut);
+    g.addColorStop(0, "#fff3cf"); g.addColorStop(0.5, "#e7c879"); g.addColorStop(1, "#c9a24a");
+    ctx.shadowColor = "rgba(231,200,121,0.9)"; ctx.shadowBlur = 16;
+    ctx.fillStyle = g; ctx.fill();
+    ctx.lineWidth = 2; ctx.strokeStyle = "#fff5d8"; ctx.stroke();
+    _userStarUrl = cv.toDataURL();
+    return _userStarUrl;
+  }
+  let _userAuraUrl = null;
+  function userAuraImage() {
+    if (_userAuraUrl) return _userAuraUrl;
+    const S = 256, cv = document.createElement("canvas"); cv.width = cv.height = S;
+    const ctx = cv.getContext("2d");
+    const g = ctx.createRadialGradient(S / 2, S / 2, 0, S / 2, S / 2, S / 2);
+    g.addColorStop(0.00, "rgba(231,200,121,0.80)");
+    g.addColorStop(0.35, "rgba(231,200,121,0.42)");
+    g.addColorStop(0.70, "rgba(231,200,121,0.13)");
+    g.addColorStop(1.00, "rgba(231,200,121,0.00)");
+    ctx.fillStyle = g; ctx.fillRect(0, 0, S, S);
+    _userAuraUrl = cv.toDataURL();
+    return _userAuraUrl;
+  }
 
   function buildScene(host) {
     const categoriesById = CATEGORIES.reduce((m, c) => (m[c.id] = c, m), {});
@@ -125,13 +166,33 @@ window.Bh.map = window.Bh.map || {};
     // the bells from the camera's POV — a plain pick() would always return
     // the cone instead of the bell. drillPick searches in depth and we keep
     // the first hit that carries a curiosityId (i.e. a real pin).
-    function pickCuriosity(windowPos) {
+    // One drill resolves either a real bell (curiosityId) or a collapsed
+    // cluster bell (clusterIndex). When collapsed the members are hidden so the
+    // cluster wins; when expanded the cluster is hidden so a member wins.
+    function pickPinOrCluster(windowPos) {
       const drilled = scene.drillPick(windowPos, 6) || [];
       for (const p of drilled) {
         const cid = p?.id?.curiosityId ?? p?.primitive?.curiosityId;
-        if (cid != null) return cid;
+        if (cid != null) return { kind: "curiosity", id: cid };
+        const ci = p?.id?.clusterIndex ?? p?.primitive?.clusterIndex;
+        if (ci != null) return { kind: "cluster", id: ci };
       }
       return null;
+    }
+
+    // Clicking a collapsed cluster flies the camera down past the expand
+    // threshold, so the LOD opens the cluster into its fanned ring of bells.
+    function flyToCluster(idx) {
+      const cl = pins.clusters && pins.clusters[idx];
+      if (!cl) return;
+      const groundH = pins.pinData[cl.members[0].id]?.groundH ?? 60;
+      const target = Cesium.Cartesian3.fromDegrees(cl.centre.lng, cl.centre.lat, groundH + 40);
+      const heading = Cesium.Math.toRadians(20 + Math.random() * 30);
+      viewer.camera.flyToBoundingSphere(new Cesium.BoundingSphere(target, 70), {
+        offset: new Cesium.HeadingPitchRange(heading, Cesium.Math.toRadians(-40), 300),
+        duration: 1.6 / speedMul,
+        easingFunction: Cesium.EasingFunction.QUARTIC_IN_OUT,
+      });
     }
 
     // Find the spotlit landmark whose reveal disk contains the cursor's
@@ -236,13 +297,14 @@ window.Bh.map = window.Bh.map || {};
 
     const handler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
     handler.setInputAction((e) => {
-      const cid = pickCuriosity(e.position);
-      if (cid != null) {
-        const c = items.find((x) => x.id === cid);
+      const hit = pickPinOrCluster(e.position);
+      if (hit && hit.kind === "curiosity") {
+        const c = items.find((x) => x.id === hit.id);
         if (c) pins.ringBell(c);
-        if (onSelectCb) onSelectCb(cid);
+        if (onSelectCb) onSelectCb(hit.id);
         return;
       }
+      if (hit && hit.kind === "cluster") { flyToCluster(hit.id); return; }
       // Suppress landmark fly-around for ~400 ms after an orbit release —
       // otherwise the same click that stopped the tour can immediately re-
       // start it if it lands inside the reveal radius.
@@ -252,10 +314,10 @@ window.Bh.map = window.Bh.map || {};
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
     handler.setInputAction((e) => {
-      const cid = pickCuriosity(e.endPosition);
-      scene.canvas.style.cursor = cid != null ? "pointer" : "";
+      const hit = pickPinOrCluster(e.endPosition);
+      scene.canvas.style.cursor = hit ? "pointer" : "";
       if (onHoverCb) {
-        if (cid != null) onHoverCb(cid, e.endPosition.x, e.endPosition.y);
+        if (hit && hit.kind === "curiosity") onHoverCb(hit.id, e.endPosition.x, e.endPosition.y);
         else onHoverCb(null);
       }
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
@@ -277,23 +339,126 @@ window.Bh.map = window.Bh.map || {};
     // React, and raise the no-op threshold so jitter doesn't trigger work.
     let lastHeadingDeg = -1;
     let rafPending = false;
-    function emitHeading() {
+    function emitCameraState() {
       if (rafPending) return;
       rafPending = true;
       requestAnimationFrame(() => {
         rafPending = false;
+        // Cluster LOD keys off camera *height* (zoom) — must run even when the
+        // heading hasn't changed, so it goes before the heading dead-band below.
+        pins.applyClusterLOD?.(viewer.camera.positionCartographic.height);
         const h = Cesium.Math.toDegrees(viewer.camera.heading);
         if (Math.abs(h - lastHeadingDeg) < 0.5) return;
         lastHeadingDeg = h;
         onHeadingCb && onHeadingCb(h);
       });
     }
-    viewer.camera.changed.addEventListener(emitHeading);
-    setTimeout(emitHeading, 0);
+    viewer.camera.changed.addEventListener(emitCameraState);
+    setTimeout(emitCameraState, 0);
+
+    // ── "You are here" marker ────────────────────────────────────────────────
+    // A floating, slowly-spinning gold star over the visitor's GPS position,
+    // a ground aura, and a "radar" ring that periodically sweeps outward over
+    // the nearby curiosities — a non-invasive in-world nearby signal. Animated
+    // via preRender + an explicit requestRender (requestRenderMode is on), but
+    // only while the marker exists, so the scene returns to idle once cleared.
+    const STAR_FLOAT = 72;
+    let userMarker = null;
+    let userAnimAttached = false;
+    function sampleUserGround(lng, lat) {
+      if (baseTileset && scene.sampleHeight) {
+        try {
+          const h = scene.sampleHeight(Cesium.Cartographic.fromDegrees(lng, lat), [baseTileset]);
+          if (h != null && !isNaN(h) && h <= 700 && h >= -50) return h;
+        } catch (e) {}
+      }
+      return 30;
+    }
+    function animateUser() {
+      if (!userMarker) return;
+      const t = (performance.now() - userMarker.t0) / 1000;
+      const { lng, lat, groundH } = userMarker;
+      userMarker.star.billboard.rotation = -t * 0.6;                 // slow spin
+      userMarker.star.billboard.scale = 0.46 + 0.05 * Math.sin(t * 2.1);
+      userMarker.star.position = Cesium.Cartesian3.fromDegrees(
+        lng, lat, groundH + STAR_FLOAT + 4 * Math.sin(t * 1.25));    // gentle float
+      const PERIOD = 3.4, MAXR = 95;
+      const phase = (t % PERIOD) / PERIOD;
+      const r = 8 + phase * MAXR;
+      userMarker.pulse.ellipse.semiMajorAxis = r;
+      userMarker.pulse.ellipse.semiMinorAxis = r;
+      userMarker.pulse.ellipse.material = new Cesium.ColorMaterialProperty(
+        Cesium.Color.fromCssColorString("#e7c879").withAlpha(0.30 * (1 - phase)));
+      scene.requestRender();
+    }
+    function clearUserPosition() {
+      if (!userMarker) return;
+      viewer.entities.remove(userMarker.star);
+      viewer.entities.remove(userMarker.aura);
+      viewer.entities.remove(userMarker.pulse);
+      userMarker = null;
+      scene.requestRender();
+    }
+    function setUserPosition(coords, opts = {}) {
+      if (!coords) return;
+      const { lat, lng } = coords;
+      const groundH = sampleUserGround(lng, lat);
+      // watchPosition streams updates: move the existing marker in place rather
+      // than recreate it (no flicker), and never re-fly the camera mid-walk.
+      if (userMarker) {
+        userMarker.lng = lng; userMarker.lat = lat; userMarker.groundH = groundH;
+        userMarker.aura.position = Cesium.Cartesian3.fromDegrees(lng, lat);
+        userMarker.aura.ellipse.height = groundH + 0.5;
+        userMarker.pulse.position = Cesium.Cartesian3.fromDegrees(lng, lat);
+        userMarker.pulse.ellipse.height = groundH + 0.6;
+        scene.requestRender();
+        if (opts.fly === true) flyToUser(lng, lat, groundH);
+        return;
+      }
+      const star = viewer.entities.add({
+        id: "user-star",
+        position: Cesium.Cartesian3.fromDegrees(lng, lat, groundH + STAR_FLOAT),
+        billboard: {
+          image: userStarImage(), scale: 0.46, rotation: 0,
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+      });
+      const aura = viewer.entities.add({
+        id: "user-aura",
+        position: Cesium.Cartesian3.fromDegrees(lng, lat),
+        ellipse: {
+          semiMajorAxis: 24, semiMinorAxis: 24, height: groundH + 0.5,
+          material: new Cesium.ImageMaterialProperty({ image: userAuraImage(), transparent: true }),
+          classificationType: Cesium.ClassificationType.NONE,
+        },
+      });
+      const pulse = viewer.entities.add({
+        id: "user-pulse",
+        position: Cesium.Cartesian3.fromDegrees(lng, lat),
+        ellipse: {
+          semiMajorAxis: 8, semiMinorAxis: 8, height: groundH + 0.6,
+          material: new Cesium.ColorMaterialProperty(
+            Cesium.Color.fromCssColorString("#e7c879").withAlpha(0.3)),
+          classificationType: Cesium.ClassificationType.NONE,
+        },
+      });
+      userMarker = { star, aura, pulse, lng, lat, groundH, t0: performance.now() };
+      if (!userAnimAttached) { scene.preRender.addEventListener(animateUser); userAnimAttached = true; }
+      scene.requestRender();
+      if (opts.fly === true) flyToUser(lng, lat, groundH);
+    }
+    function flyToUser(lng, lat, groundH) {
+      viewer.camera.flyToBoundingSphere(
+        new Cesium.BoundingSphere(Cesium.Cartesian3.fromDegrees(lng, lat, groundH), 120),
+        { offset: new Cesium.HeadingPitchRange(0, Cesium.Math.toRadians(-45), 440),
+          duration: 2.2 / speedMul, easingFunction: Cesium.EasingFunction.QUARTIC_IN_OUT });
+    }
 
     return {
       setSelected(id) {
         activeId = id;
+        pins.revealFor?.(id);   // keep a selected clustered bell visible
         scene.requestRender();
       },
       setFilter(catsArg, yearMax) {
@@ -329,6 +494,8 @@ window.Bh.map = window.Bh.map || {};
       },
       onHeading(cb) { onHeadingCb = cb; },
       setAudioEnabled(v) { pins.setAudioEnabled?.(v); },
+      setUserPosition(coords, opts) { setUserPosition(coords, opts); },
+      clearUserPosition() { clearUserPosition(); },
     };
   }
 

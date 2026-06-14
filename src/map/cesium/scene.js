@@ -29,7 +29,9 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   // tiles. Camera is clamped to this rectangle on every postRender frame.
   const BOUNDS = { minLng: 13.32, maxLng: 13.39, minLat: 38.09, maxLat: 38.21 };
 
-  const MAX_REVEALS = 12;
+  // Shader reveal slots. Keep a little headroom above the spotlit-landmark
+  // count (currently 13) so adding a "light" doesn't silently drop off the end.
+  const MAX_REVEALS = 16;
 
   // ── Custom shader with reveal regions ──────────────────────────────────
   // Inside a reveal region: skip duotone, lift base colour with a warm tint.
@@ -156,7 +158,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     Cesium.Cartesian3.normalize(keyDir, keyDir);
     scene.light = new Cesium.DirectionalLight({
       direction: keyDir,
-      intensity: 2.2,
+      intensity: 2.6,
       color: Cesium.Color.fromCssColorString("#ffe9b8"),
     });
     // Camera controller: mostly Cesium defaults. Two tweaks:
@@ -206,14 +208,19 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     //     no underground
     const MIN_PITCH = Cesium.Math.toRadians(-85);
     const MAX_PITCH = Cesium.Math.toRadians(-3);
+    // Reuse one Cartographic across frames — this listener fires on every
+    // rendered frame during a gesture, so allocating per-frame churned the GC.
+    const scratchCarto = new Cesium.Cartographic();
     scene.postRender.addEventListener(() => {
-      const carto = Cesium.Cartographic.fromCartesian(viewer.camera.position);
+      const carto = Cesium.Cartographic.fromCartesian(viewer.camera.position, undefined, scratchCarto);
       const lng = Cesium.Math.toDegrees(carto.longitude), lat = Cesium.Math.toDegrees(carto.latitude);
       let cl = lng, ca = lat, changed = false;
       if (lng < BOUNDS.minLng) { cl = BOUNDS.minLng; changed = true; }
-      if (lng > BOUNDS.maxLng) { cl = BOUNDS.maxLng; changed = true; }
+      else if (lng > BOUNDS.maxLng) { cl = BOUNDS.maxLng; changed = true; }
       if (lat < BOUNDS.minLat) { ca = BOUNDS.minLat; changed = true; }
-      if (lat > BOUNDS.maxLat) { ca = BOUNDS.maxLat; changed = true; }
+      else if (lat > BOUNDS.maxLat) { ca = BOUNDS.maxLat; changed = true; }
+      // Only write the position back when actually outside the rectangle —
+      // writing every frame fought the controller's inertia and read as jitter.
       if (changed) viewer.camera.position = Cesium.Cartesian3.fromDegrees(cl, ca, carto.height);
 
       const p = viewer.camera.pitch;
@@ -233,10 +240,13 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     const isMobile = !!window.Bh?.device?.isMobile;
     return Cesium.Cesium3DTileset.fromIonAssetId(GOOGLE_3D_TILES_ION_ASSET_ID, {
       showCreditsOnScreen: false,
-      // Same SSE on mobile and desktop — the previous mobile bump made
-      // photogrammetry look like a smear. Bandwidth budget is controlled
-      // primarily by the Cesium-ion-side bounds + zoom range instead.
-      maximumScreenSpaceError: 32,
+      // SSE = max on-screen tile error before refining. Desktop was unified to
+      // 32 with mobile, but that quietly raised desktop streaming cost and made
+      // zoom/pan feel laggy on machines that should be faster. Give desktop a
+      // looser 40 (the previously-shipped, visually-fine value → fewer tile
+      // loads, smoother navigation) while keeping mobile at 32, where the small
+      // screen hides the extra error and a higher value looked like a smear.
+      maximumScreenSpaceError: isMobile ? 32 : 40,
       skipLevelOfDetail: true,
       baseScreenSpaceError: 1024,
       skipScreenSpaceErrorFactor: 16,
@@ -247,9 +257,11 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       dynamicScreenSpaceErrorDensity: 0.00278,
       dynamicScreenSpaceErrorFactor: 4.0,
       dynamicScreenSpaceErrorHeightFalloff: 0.25,
-      // Smaller tile cache on mobile (less RAM available).
-      cacheBytes: (isMobile ? 256 : 512) * 1024 * 1024,
-      maximumCacheOverflowBytes: (isMobile ? 128 : 256) * 1024 * 1024,
+      // Bigger desktop tile cache so panning back over already-visited streets
+      // doesn't re-stream tiles (a major source of desktop pan stutter); mobile
+      // stays small (less RAM available).
+      cacheBytes: (isMobile ? 256 : 1024) * 1024 * 1024,
+      maximumCacheOverflowBytes: (isMobile ? 128 : 512) * 1024 * 1024,
       preloadFlightDestinations: true,
     }).then((ts) => {
       scene.primitives.add(ts);

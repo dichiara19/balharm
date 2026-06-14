@@ -13,10 +13,14 @@ window.Bh.ui = window.Bh.ui || {};
     return <polygon points={pts.join(" ")} fill="none" stroke={stroke} strokeWidth="1" />;
   }
 
-  function Cornice({ heading = 0 }) {
-    // The compass rotates *opposite* to the camera heading so its N always
-    // points to true north no matter where the user has rotated the map.
-    const compassRotation = -heading;
+  // The compass rotates *opposite* to the camera heading so its N always
+  // points to true north. Its transform is driven IMPERATIVELY via compassRef
+  // (app.jsx writes the rotation straight to the DOM node on every camera tick)
+  // so rotating the map never triggers a React re-render of the whole tree —
+  // that per-frame reconciliation in the dev build was a real source of the
+  // "glitchy" desktop navigation. Everything else here is static, so the
+  // component is memoised below and renders exactly once.
+  function Cornice({ compassRef }) {
     return (
       <svg className="cornice" viewBox="0 0 1600 900" preserveAspectRatio="none" aria-hidden="true">
         <defs>
@@ -42,7 +46,7 @@ window.Bh.ui = window.Bh.ui || {};
           </g>
         ))}
         {/* Central compass — rotates with the camera so N stays towards true north. */}
-        <g transform={`translate(800,450) rotate(${compassRotation})`} opacity="0.18">
+        <g ref={compassRef} transform="translate(800,450) rotate(0)" opacity="0.18">
           <Star r1={140} r2={70} stroke="#c9a24a" />
           <Star r1={90} r2={45} stroke="#c9a24a" />
           <circle r="4" fill="#c9a24a"/>
@@ -56,5 +60,7 @@ window.Bh.ui = window.Bh.ui || {};
   }
 
   window.Bh.ui.Star = Star;
-  window.Bh.ui.Cornice = Cornice;
+  // Memoised: compassRef is stable, so Cornice mounts once and the camera-driven
+  // compass rotation is applied straight to the DOM, bypassing React entirely.
+  window.Bh.ui.Cornice = React.memo(Cornice);
 })();

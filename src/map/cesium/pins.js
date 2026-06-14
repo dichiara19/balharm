@@ -76,53 +76,66 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     return m / 111320;
   }
 
-  // Bells whose coordinates land within MERGE_RADIUS_M of one another are
-  // bunched too close to read distinctly. We greedy-cluster them by geographic
-  // proximity (not exact equality) and arrange the cluster on a small circle
-  // around the group centroid. The result: identical or near-identical pins
-  // are gently fanned out, but no bell is ever moved more than ~30 m.
-  const MERGE_RADIUS_M  = 25;
+  // ── Clustering ───────────────────────────────────────────────────────────
+  // Bells whose coordinates land near one another (e.g. the 5-bell Palazzo dei
+  // Normanni / Cappella Palatina knot) would pile into a "pasticcio" up close.
+  // We group them with union-find — order-independent and transitive, so the
+  // *whole* knot becomes ONE cluster (the old greedy running-centroid join left
+  // stragglers that still overlapped). A cluster then presents itself by camera
+  // distance (see applyClusterLOD): collapsed to a single counted "cluster bell"
+  // when zoomed out, fanned into a readable ring when zoomed in.
+  const JOIN_RADIUS_M    = 65;   // members within this distance join one cluster
   const PIN_SEPARATION_M = 16;
-  function disambiguateOffsets(items) {
-    const groups = [];
-    items.forEach((c) => {
-      const found = groups.find((g) => {
-        const dLatM = (c.lat - g.centre.lat) * 111320;
-        const dLngM = (c.lng - g.centre.lng) * 111320 * Math.cos(c.lat * Math.PI / 180);
-        return Math.hypot(dLatM, dLngM) < MERGE_RADIUS_M;
-      });
-      if (found) {
-        found.members.push(c);
-        // Recompute centroid as we add members so the cluster doesn't drift.
-        const n = found.members.length;
-        found.centre.lat = ((n - 1) * found.centre.lat + c.lat) / n;
-        found.centre.lng = ((n - 1) * found.centre.lng + c.lng) / n;
-      } else {
-        groups.push({ centre: { lat: c.lat, lng: c.lng }, members: [c] });
-      }
-    });
+  // Camera-height thresholds with hysteresis so the cluster doesn't flicker
+  // open/closed while hovering at the boundary altitude.
+  const LOD_COLLAPSE_ABOVE_M = 560;
+  const LOD_EXPAND_BELOW_M   = 420;
 
-    const offsets = {};
-    groups.forEach((g) => {
-      if (g.members.length === 1) {
-        offsets[g.members[0].id] = { dxM: 0, dyM: 0 };
-        return;
-      }
-      const n = g.members.length;
-      const radius = PIN_SEPARATION_M * (n > 4 ? 1.55 : 1.1);
-      g.members.forEach((c, i) => {
+  function distMeters(a, b) {
+    const dLatM = (a.lat - b.lat) * 111320;
+    const dLngM = (a.lng - b.lng) * 111320 * Math.cos(((a.lat + b.lat) / 2) * Math.PI / 180);
+    return Math.hypot(dLatM, dLngM);
+  }
+
+  // Returns { pinOffsets (per-member fan offset, 0 for singletons),
+  //           clusters [{ members, centre, isMulti }], clusterOf (id -> index) }.
+  function computeClustering(items) {
+    const parent = items.map((_, i) => i);
+    const find = (i) => { while (parent[i] !== i) { parent[i] = parent[parent[i]]; i = parent[i]; } return i; };
+    const union = (a, b) => { const ra = find(a), rb = find(b); if (ra !== rb) parent[ra] = rb; };
+    for (let i = 0; i < items.length; i++)
+      for (let j = i + 1; j < items.length; j++)
+        if (distMeters(items[i], items[j]) < JOIN_RADIUS_M) union(i, j);
+
+    const byRoot = {};
+    items.forEach((c, i) => { const r = find(i); (byRoot[r] = byRoot[r] || []).push(c); });
+
+    const clusters = [], clusterOf = {}, pinOffsets = {};
+    Object.values(byRoot).forEach((members) => {
+      let lat = 0, lng = 0;
+      members.forEach((c) => { lat += c.lat; lng += c.lng; });
+      const centre = { lat: lat / members.length, lng: lng / members.length };
+      const idx = clusters.length;
+      const isMulti = members.length > 1;
+      clusters.push({ members, centre, isMulti });
+      const n = members.length;
+      // Fan radius wide enough to clear the bell footprint (~BELL_SCALE m) so
+      // fanned bells never interpenetrate, growing a little with member count.
+      const radius = Math.max(PIN_SEPARATION_M, BELL_SCALE * 1.6) * (n > 4 ? 1.5 : 1.15);
+      members.forEach((c, i) => {
+        clusterOf[c.id] = idx;
+        if (!isMulti) { pinOffsets[c.id] = { dxM: 0, dyM: 0 }; return; }
         const angle = (i / n) * Math.PI * 2;
-        // Offset is from the *centroid*, not from c itself, so two bells that
-        // started 8 m apart end up symmetric around their midpoint.
-        const baseDxM = (g.centre.lng - c.lng) * 111320 * Math.cos(c.lat * Math.PI / 180);
-        const baseDyM = (g.centre.lat - c.lat) * 111320;
-        offsets[c.id] = {
+        // Measured from the centroid so members sit symmetric around the group.
+        const baseDxM = (centre.lng - c.lng) * 111320 * Math.cos(c.lat * Math.PI / 180);
+        const baseDyM = (centre.lat - c.lat) * 111320;
+        pinOffsets[c.id] = {
           dxM: baseDxM + Math.cos(angle) * radius,
           dyM: baseDyM + Math.sin(angle) * radius,
         };
       });
     });
-    return offsets;
+    return { pinOffsets, clusters, clusterOf };
   }
 
   // ── Audio (one-shot, overlap-safe) ──────────────────────────────────────
@@ -188,13 +201,23 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   function makePinSystem(viewer, scene, items, categoriesById) {
     preFetchBellBytes(); // pull the bytes early; decode happens on first click
 
-    // Compute spread offsets for any curiosities that share coordinates (the
-    // data-side fix may leave a residue, and any future duplicate is handled
-    // automatically by this safety net).
-    const pinOffsets = disambiguateOffsets(items);
+    // Group near-coincident curiosities; pinOffsets fan each cluster's members
+    // out around their shared centroid, clusters[] drives the zoom LOD.
+    const { pinOffsets, clusters, clusterOf } = computeClustering(items);
 
     const pinData = {};      // id -> { groundH, entity, aura, sampled, offset }
     const ringingPins = {};  // id -> { start (perfNow ms) }
+    const clusterData = {};  // clusterIndex -> { entity, aura, centre, groundH, sampled }
+
+    // LOD state: clusters start collapsed (camera opens far at ~1000 m). These
+    // are recomputed only when the collapse/expand boundary is crossed or a
+    // filter changes — never per frame.
+    let collapsed = true;
+    let filterCats = null;
+    let filterYearMax = Infinity;
+    function memberVisible(c) {
+      return (!filterCats || filterCats.includes(c.cat)) && c.year <= filterYearMax;
+    }
 
     function centrePosition(c, h, dxMeters = 0, dhMeters = 0) {
       const off = pinOffsets[c.id] || { dxM: 0, dyM: 0 };
@@ -205,7 +228,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     }
 
     function createPin(c) {
-      const baseH = 80;
+      // Curiosities on Monte Pellegrino (Santuario di Santa Rosalia, summit)
+      // carry an `altitude` hint: their tiles aren't loaded while the camera is
+      // over the city, so scene.sampleHeight returns nothing and a default 80 m
+      // would bury the bell inside the mountain. Start at the known altitude;
+      // sampleGroundFor still refines it precisely once the tiles stream in.
+      const baseH = (typeof c.altitude === "number") ? c.altitude : 80;
       const position = centrePosition(c, baseH);
 
       const entity = viewer.entities.add({
@@ -258,6 +286,80 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       aura.curiosityId = c.id;
 
       pinData[c.id] = { groundH: baseH, entity, aura, sampled: false };
+    }
+
+    function clusterCentrePosition(cl, h) {
+      const alt = h + BELL_GROUND_OFFSET + BELL_HALF_HEIGHT;
+      return Cesium.Cartesian3.fromDegrees(cl.centre.lng, cl.centre.lat, alt);
+    }
+
+    // A collapsed cluster reads as one slightly larger bell wearing a count
+    // badge. It carries clusterIndex (not curiosityId) so a click flies the
+    // camera in to expand the cluster instead of opening a single curiosity.
+    function createClusterMarker(idx) {
+      const cl = clusters[idx];
+      const baseH = 80;
+      const position = clusterCentrePosition(cl, baseH);
+      const counts = {};
+      cl.members.forEach((c) => { counts[c.cat] = (counts[c.cat] || 0) + 1; });
+      const domCat = Object.keys(counts).sort((a, b) => counts[b] - counts[a])[0];
+
+      const entity = viewer.entities.add({
+        id: `cluster-${idx}`,
+        position,
+        orientation: Cesium.Transforms.headingPitchRollQuaternion(
+          position, new Cesium.HeadingPitchRoll(0, 0, 0)),
+        model: {
+          uri: BELL_MODEL_URI,
+          scale: BELL_SCALE * 1.12,
+          minimumPixelSize: 40,
+          maximumScale: BELL_SCALE * 5,
+          runAnimations: false,
+          lightColor: new Cesium.Cartesian3(1.6, 1.5, 1.2),
+          colorBlendMode: Cesium.ColorBlendMode.HIGHLIGHT,
+          color: Cesium.Color.fromCssColorString("#f6deb0"),
+          colorBlendAmount: 0.2,
+          silhouetteColor: Cesium.Color.fromCssColorString("#fff5d8"),
+          silhouetteSize: 1.4,
+        },
+        label: {
+          text: String(cl.members.length),
+          font: "600 14px 'Hanken Grotesk', system-ui, sans-serif",
+          fillColor: Cesium.Color.fromCssColorString("#231708"),
+          showBackground: true,
+          backgroundColor: Cesium.Color.fromCssColorString("#e7c879").withAlpha(0.96),
+          backgroundPadding: new Cesium.Cartesian2(8, 5),
+          verticalOrigin: Cesium.VerticalOrigin.CENTER,
+          horizontalOrigin: Cesium.HorizontalOrigin.CENTER,
+          pixelOffset: new Cesium.Cartesian2(0, -34),
+          disableDepthTestDistance: Number.POSITIVE_INFINITY,
+        },
+      });
+      entity.clusterIndex = idx;
+
+      const aura = viewer.entities.add({
+        id: `cluster-${idx}-aura`,
+        position: Cesium.Cartesian3.fromDegrees(cl.centre.lng, cl.centre.lat),
+        ellipse: {
+          semiMajorAxis: AURA_RADIUS * 1.25,
+          semiMinorAxis: AURA_RADIUS * 1.25,
+          height: baseH + AURA_HEIGHT_OFF,
+          material: new Cesium.ImageMaterialProperty({
+            image: auraImageFor(domCat), transparent: true,
+          }),
+          classificationType: Cesium.ClassificationType.NONE,
+        },
+      });
+      aura.clusterIndex = idx;
+
+      clusterData[idx] = { entity, aura, groundH: baseH, sampled: false };
+    }
+
+    function positionCluster(idx) {
+      const cd = clusterData[idx]; if (!cd) return;
+      const pos = clusterCentrePosition(clusters[idx], cd.groundH);
+      cd.entity.position = pos;
+      cd.aura.ellipse.height = cd.groundH + AURA_HEIGHT_OFF;
     }
 
     // Apply translation + rotation. Rotating around the handle (top of model)
@@ -315,10 +417,24 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
         if (h > bestH) bestH = h;
       }
       if (bestH === -Infinity) return;
-      data.groundH = bestH;
+      // `altitude` acts as a floor, not just a seed: on Monte Pellegrino the
+      // cross-sampler often catches the terrace/road in front of the Santuario
+      // (lower than the building + cliff behind it), which would re-bury the
+      // bell. Never let a sample pull a hinted pin below its known altitude.
+      const h = (typeof c.altitude === "number") ? Math.max(bestH, c.altitude) : bestH;
+      data.groundH = h;
       data.sampled = true;
-      applyPose(c, bestH);
-      placeAura(c, bestH, data);
+      applyPose(c, h);
+      placeAura(c, h, data);
+      // The cluster bell sits at the centroid; reuse the members' roof samples
+      // (highest wins) instead of sampling the centroid column separately.
+      const ci = clusterOf[c.id];
+      const cd = clusterData[ci];
+      if (cd) {
+        cd.groundH = cd.sampled ? Math.max(cd.groundH, bestH) : bestH;
+        cd.sampled = true;
+        positionCluster(ci);
+      }
     }
 
     function ringBell(c) {
@@ -374,27 +490,85 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       return Object.keys(ringingPins).length > 0;
     }
 
-    function applyVisibility(filterCats, filterYearMax) {
-      items.forEach((c) => {
-        const d = pinData[c.id]; if (!d) return;
-        const passesCat = !filterCats || filterCats.includes(c.cat);
-        const passesYear = c.year <= filterYearMax;
-        const visible = passesCat && passesYear;
-        d.entity.show = visible;
-        d.aura.show = visible;
+    // Clusters that must stay open regardless of zoom because one of their
+    // members is the currently-selected curiosity (tour / geo / deep link).
+    const forcedExpand = new Set();
+
+    // Single source of truth for what is shown. Reconciles three inputs: the
+    // category/year filter, the camera-distance LOD (collapsed?), and any
+    // forced-open cluster. Cheap, and only called on a real state change.
+    function refresh() {
+      clusters.forEach((cl, idx) => {
+        if (!cl.isMulti) {
+          const c = cl.members[0];
+          const d = pinData[c.id]; if (!d) return;
+          const v = memberVisible(c);
+          d.entity.show = v; d.aura.show = v;
+          return;
+        }
+        const cd = clusterData[idx]; if (!cd) return;
+        const open = !collapsed || forcedExpand.has(idx);
+        if (open) {
+          cd.entity.show = false; cd.aura.show = false;
+          cl.members.forEach((c) => {
+            const d = pinData[c.id]; if (!d) return;
+            const v = memberVisible(c);
+            d.entity.show = v; d.aura.show = v;
+          });
+        } else {
+          cl.members.forEach((c) => {
+            const d = pinData[c.id]; if (!d) return;
+            d.entity.show = false; d.aura.show = false;
+          });
+          const visN = cl.members.filter(memberVisible).length;
+          cd.entity.show = visN > 0;
+          cd.aura.show = visN > 0;
+          if (visN > 0) cd.entity.label.text = String(visN);
+        }
       });
+      scene.requestRender();
+    }
+
+    // Called on camera move (throttled by index.js). Crosses the collapse/expand
+    // boundary with hysteresis so a cluster doesn't flicker at the threshold.
+    function applyClusterLOD(cameraHeight) {
+      const next = collapsed
+        ? (cameraHeight < LOD_EXPAND_BELOW_M ? false : true)
+        : (cameraHeight > LOD_COLLAPSE_ABOVE_M ? true : false);
+      if (next !== collapsed) { collapsed = next; refresh(); }
+    }
+
+    // Keep the selected curiosity visible even if its cluster would be collapsed.
+    function revealFor(curiosityId) {
+      forcedExpand.clear();
+      if (curiosityId != null) {
+        const ci = clusterOf[curiosityId];
+        if (ci != null && clusters[ci] && clusters[ci].isMulti) forcedExpand.add(ci);
+      }
+      refresh();
+    }
+
+    function applyVisibility(cats, yearMax) {
+      filterCats = (cats && cats.length) ? cats : null;
+      filterYearMax = (yearMax === undefined || yearMax === null) ? Infinity : yearMax;
+      refresh();
     }
 
     items.forEach(createPin);
+    clusters.forEach((cl, idx) => { if (cl.isMulti) createClusterMarker(idx); });
+    refresh();   // initial paint: multi-clusters start collapsed
 
     return {
       pinData,
       pinOffsets,
+      clusters,
       sampleGroundFor,
       ringBell,
       tick,
       hasActiveAnimation,
       applyVisibility,
+      applyClusterLOD,
+      revealFor,
       setAudioEnabled,
     };
   }
