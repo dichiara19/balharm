@@ -62,6 +62,26 @@ window.Bh.ui = window.Bh.ui || {};
     // Notify parent on snap changes.
     useEffect(() => { onSnap && onSnap(snapState); }, [snapState, onSnap]);
 
+    // Recompute the px-based snap geometry after the viewport settles (device
+    // rotation, or the mobile URL bar collapsing). toPx() reads innerHeight
+    // live, so a re-render is enough; debounced 280ms so transient URL-bar
+    // jitter doesn't thrash the sheet mid-scroll.
+    const [, bumpGeom] = useState(0);
+    useEffect(() => {
+      let timer;
+      const onViewportChange = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => bumpGeom((n) => n + 1), 280);
+      };
+      window.addEventListener("orientationchange", onViewportChange);
+      window.addEventListener("resize", onViewportChange);
+      return () => {
+        clearTimeout(timer);
+        window.removeEventListener("orientationchange", onViewportChange);
+        window.removeEventListener("resize", onViewportChange);
+      };
+    }, []);
+
     const onPointerDown = useCallback((e) => {
       if (!handleRef.current?.contains(e.target)) return;
       e.preventDefault();

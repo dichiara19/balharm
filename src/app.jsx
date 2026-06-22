@@ -235,8 +235,22 @@
       setTour(next); select(tourList[next].id);
       track(EVENTS.TOUR_STEP, { dir: "prev", index: next });
     };
-    const exitTour = () => { setTour(null); select(null); track(EVENTS.TOUR_EXIT); };
+    // Stable identity: the mobile modal takes exitTour as onClose, and the
+    // memoised Modal must not re-render on every live compass tick during a
+    // flyTo. select/setTour/track are all stable, so deps are empty.
+    const exitTour = useCallback(() => { setTour(null); select(null); track(EVENTS.TOUR_EXIT); }, [select]);
     const onTourToggle = () => tour === null ? startTour() : exitTour();
+
+    // Tour navigation handed to the mobile modal sheet so prev/next lives with
+    // the content it controls (the floating .tour-bar is desktop-only). Memoised
+    // on [tour, count] so live compass re-renders don't re-mount the memoised
+    // Modal 30×/sec during a flyTo. The captured prev/next close over the same
+    // `tour` value, so a stale object between tour steps still steps correctly.
+    const tourNav = useMemo(() => (
+      isMobile && tour !== null
+        ? { index: tour, total: tourList.length, onPrev: prevTour, onNext: nextTour }
+        : null
+    ), [tour, tourList.length]);
 
     // Keyboard
     useEffect(() => {
@@ -293,7 +307,7 @@
 
         <div className="hint">{isMobile ? (t.hintMobile || t.hint) : t.hint}</div>
 
-        {tour !== null && (
+        {!isMobile && tour !== null && (
           <div className="tour-bar">
             <button onClick={prevTour}>← {t.tourPrev}</button>
             <button className="primary" onClick={() => select(tourList[tour].id)}>
@@ -317,19 +331,19 @@
 
         {modalItem && isMobile && (
           <BottomSheet open={true}
-                       onOpenChange={(o) => { if (!o) select(null); }}
+                       onOpenChange={(o) => { if (!o) { tour !== null ? exitTour() : select(null); } }}
                        snap={["peek", "full"]}
                        peekHeight="38%"
                        fullHeight="92%"
-                       initial={tour !== null ? "full" : "peek"}
+                       initial="peek"
                        backdrop={true}
                        focusTrap={true}
                        closeOnSwipeDown={true}
                        onSnap={setModalSheetSnap}
                        className="bh-modal-sheet">
-            <Modal item={modalItem} onClose={closeModal} lang={lang}
+            <Modal item={modalItem} onClose={tour !== null ? exitTour : closeModal} lang={lang}
                    total={items.length} onShare={onShare} sharedFlash={shared}
-                   mobile={true} />
+                   mobile={true} tourNav={tourNav} />
           </BottomSheet>
         )}
 

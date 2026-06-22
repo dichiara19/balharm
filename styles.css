@@ -153,6 +153,115 @@ body {
   color: var(--muted);
 }
 
+/* Brand editorial pin — a small "i" next to the name that reveals the
+   meaning of "Bal'harm" (Palermo's Arabic name). Hover on pointer devices,
+   tap to toggle on touch. The popover mirrors the dark/light chrome theme. */
+.brand-name {
+  position: relative;
+  display: inline-flex;
+  align-items: baseline;
+  gap: 8px;
+}
+.brand-info {
+  align-self: center;
+  width: 17px; height: 17px;
+  flex: 0 0 17px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  background: rgba(11, 29, 58, 0.42);
+  color: var(--gold);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 12px;
+  line-height: 1;
+  cursor: pointer;
+  backdrop-filter: blur(8px);
+  -webkit-backdrop-filter: blur(8px);
+  transition: border-color .25s ease, color .25s ease, transform .25s ease;
+}
+[data-mode="day"] .brand-info { background: rgba(245, 236, 214, 0.5); }
+.brand-info:hover { border-color: var(--gold); transform: translateY(-1px); }
+.brand-info:focus-visible { outline: none; border-color: var(--gold); }
+
+.brand-tip {
+  position: absolute;
+  top: calc(100% + 14px);
+  left: 0;
+  display: block;
+  width: min(340px, 78vw);
+  padding: 16px 18px 17px;
+  background: rgba(6, 19, 40, 0.92);
+  border: 1px solid var(--line);
+  border-radius: 4px;
+  box-shadow: 0 18px 50px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px);
+  -webkit-backdrop-filter: blur(14px);
+  opacity: 0;
+  visibility: hidden;
+  transform: translateY(-6px);
+  transition: opacity .3s ease, transform .3s ease, visibility .3s;
+  z-index: 40;
+  pointer-events: none;
+}
+[data-mode="day"] .brand-tip { background: rgba(245, 236, 214, 0.94); }
+.brand-tip::before {
+  content: "";
+  position: absolute;
+  top: -6px; left: 19px;
+  width: 10px; height: 10px;
+  background: inherit;
+  border-left: 1px solid var(--line);
+  border-top: 1px solid var(--line);
+  transform: rotate(45deg);
+}
+.brand-tip.open,
+.brand-name:focus-within .brand-tip {
+  opacity: 1;
+  visibility: visible;
+  transform: translateY(0);
+  pointer-events: auto;
+}
+@media (hover: hover) {
+  .brand-name:hover .brand-tip {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+    pointer-events: auto;
+  }
+}
+.brand-tip-chain {
+  display: block;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  color: var(--gold);
+  margin-bottom: 10px;
+}
+.brand-tip-body {
+  display: block;
+  font-family: var(--sans);
+  font-size: 12.5px;
+  font-style: normal;
+  line-height: 1.55;
+  letter-spacing: 0;
+  color: var(--muted);
+}
+.brand-tip-claim {
+  display: block;
+  margin-top: 11px;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 15px;
+  line-height: 1.4;
+  letter-spacing: 0;
+  color: var(--ink);
+}
+
 /* === Toggles & pills === */
 .pill {
   display: inline-flex; align-items: center; gap: 8px;
@@ -785,6 +894,8 @@ body {
   overflow-y: auto;
   overscroll-behavior: contain;
   padding: 4px 22px 22px;
+  /* Keep content clear of the iOS home indicator / gesture bar. */
+  padding-bottom: max(22px, env(safe-area-inset-bottom));
   -webkit-overflow-scrolling: touch;
 }
 .bh-sheet-backdrop {
@@ -815,6 +926,10 @@ html.is-mobile .bh-modal-sheet .modal-mobile .mini-map { display: none; }
 
 html.is-mobile .topbar {
   padding: 18px 22px;
+  /* Clear the notch / status bar / curved corners on cover-fit viewports. */
+  padding-top: max(18px, env(safe-area-inset-top));
+  padding-left: max(22px, env(safe-area-inset-left));
+  padding-right: max(22px, env(safe-area-inset-right));
 }
 html.is-mobile .brand h1 {
   font-size: 22px;
@@ -904,5 +1019,91 @@ html.is-mobile .hint {
 .bh-modal-sheet .modal-mobile .close {
   top: -2px; right: 0;
 }
+
+/* === Mobile guided tour — navigation docked inside the modal sheet ===
+   The desktop floating .tour-bar overlapped the bottom sheet on phones; here
+   the stepper lives as a sticky header so it stays reachable at any snap and
+   never floats over the content. Exit is explicit (the "Esci" link) plus the
+   usual swipe-down / backdrop tap. */
+html.is-mobile .tour-bar { display: none; }
+
+.bh-modal-sheet .modal-mobile.in-tour .close { display: none; }
+
+.bh-modal-sheet .tour-nav {
+  position: sticky;
+  top: 0;
+  z-index: 5;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: -4px -22px 14px;
+  padding: 10px 16px 12px;
+  background: linear-gradient(180deg, rgba(8, 22, 48, 0.98), rgba(8, 22, 48, 0.84));
+  border-bottom: 1px solid var(--line);
+  -webkit-backdrop-filter: blur(12px);
+          backdrop-filter: blur(12px);
+}
+.bh-modal-sheet .tour-nav-btn {
+  flex: 0 0 auto;
+  width: 46px; height: 46px;
+  display: grid; place-items: center;
+  font-family: var(--serif);
+  font-size: 26px; line-height: 1;
+  color: var(--gold);
+  background: rgba(201, 162, 74, 0.08);
+  border: 1px solid var(--line);
+  border-radius: 50%;
+  cursor: pointer;
+  transition: transform .12s ease, border-color .2s ease, background .2s ease;
+}
+.bh-modal-sheet .tour-nav-btn:active {
+  transform: scale(0.92);
+  background: rgba(201, 162, 74, 0.18);
+  border-color: var(--gold);
+}
+.bh-modal-sheet .tour-nav-mid {
+  flex: 1 1 auto;
+  min-width: 0;
+  display: flex; flex-direction: column; align-items: center;
+  gap: 5px;
+}
+.bh-modal-sheet .tour-nav-count {
+  font-family: var(--mono);
+  font-size: 15px;
+  letter-spacing: 0.14em;
+  color: var(--ink);
+}
+.bh-modal-sheet .tour-nav-count i {
+  color: var(--gold-soft);
+  font-style: normal;
+  margin: 0 5px;
+}
+.bh-modal-sheet .tour-nav-track {
+  width: min(150px, 42vw);
+  height: 3px;
+  background: rgba(201, 162, 74, 0.18);
+  border-radius: 2px;
+  overflow: hidden;
+}
+.bh-modal-sheet .tour-nav-fill {
+  display: block;
+  height: 100%;
+  background: var(--gold);
+  border-radius: 2px;
+  transition: width .35s cubic-bezier(.2, .7, .2, 1);
+}
+.bh-modal-sheet .tour-nav-exit {
+  margin-top: 1px;
+  background: none;
+  border: 0;
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 2px 6px;
+}
+.bh-modal-sheet .tour-nav-exit:active { color: var(--gold); }
 
 

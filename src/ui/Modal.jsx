@@ -42,19 +42,38 @@ window.Bh.ui = window.Bh.ui || {};
     );
   }
 
-  function Modal({ item, onClose, lang, total, onShare, sharedFlash, mobile = false }) {
+  function Modal({ item, onClose, lang, total, onShare, sharedFlash, mobile = false, tourNav = null }) {
     const t = window.Bh.i18n.COPY[lang];
     const { Star } = window.Bh.ui;
     const { fmtYear } = window.Bh.lib.format;
     const cat = window.Bh.data.CATEGORIES.find(c => c.id === item.cat);
+    const inTour = mobile && !!tourNav;
     // On mobile the modal is hosted inside a BottomSheet (no scrim wrapper).
     const Wrapper = ({ children }) => mobile
-      ? <div className="modal modal-mobile">{children}</div>
+      ? <div className={`modal modal-mobile${inTour ? " in-tour" : ""}`}>{children}</div>
       : <div className="scrim" onClick={onClose}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>{children}</div>
         </div>;
+    const pct = inTour ? ((tourNav.index + 1) / Math.max(1, tourNav.total)) * 100 : 0;
     return (
       <Wrapper>
+          {inTour && (
+            <div className="tour-nav" role="navigation" aria-label={t.tour}>
+              <button type="button" className="tour-nav-btn prev"
+                      onClick={tourNav.onPrev} aria-label={t.tourPrev}>‹</button>
+              <div className="tour-nav-mid">
+                <span className="tour-nav-count">
+                  {String(tourNav.index + 1).padStart(2, "0")}<i>/</i>{String(tourNav.total).padStart(2, "0")}
+                </span>
+                <span className="tour-nav-track" aria-hidden="true">
+                  <span className="tour-nav-fill" style={{ width: `${pct}%` }} />
+                </span>
+                <button type="button" className="tour-nav-exit" onClick={onClose}>{t.tourEnd}</button>
+              </div>
+              <button type="button" className="tour-nav-btn next"
+                      onClick={tourNav.onNext} aria-label={t.tourNext}>›</button>
+            </div>
+          )}
           <button className="close" onClick={onClose} aria-label={t.closeAria}>×</button>
           <div className="img">
             {item.img ? (

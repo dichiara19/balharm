@@ -3,9 +3,29 @@ window.Bh = window.Bh || {};
 window.Bh.ui = window.Bh.ui || {};
 
 (function () {
+  const { useState, useRef, useEffect } = React;
+
   function TopBar({ lang, setLang, audioOn, setAudioOn, tourActive, onTour }) {
     const t = window.Bh.i18n.COPY[lang];
     const { Star } = window.Bh.ui;
+    const [tipOpen, setTipOpen] = useState(false);
+    const nameRef = useRef(null);
+
+    // Close the editorial popover on outside tap / Escape (mobile + desktop).
+    useEffect(() => {
+      if (!tipOpen) return;
+      const onPointer = (e) => {
+        if (nameRef.current && !nameRef.current.contains(e.target)) setTipOpen(false);
+      };
+      const onKey = (e) => { if (e.key === "Escape") setTipOpen(false); };
+      document.addEventListener("pointerdown", onPointer);
+      document.addEventListener("keydown", onKey);
+      return () => {
+        document.removeEventListener("pointerdown", onPointer);
+        document.removeEventListener("keydown", onKey);
+      };
+    }, [tipOpen]);
+
     return (
       <div className="topbar">
         <div className="brand">
@@ -13,7 +33,17 @@ window.Bh.ui = window.Bh.ui || {};
             <Star r1={26} r2={12} stroke="#c9a24a" />
             <circle r="3" fill="#c9a24a"/>
           </svg>
-          <h1>Bal'harm</h1>
+          <span className="brand-name" ref={nameRef}>
+            <h1>Bal'harm</h1>
+            <button type="button" className="brand-info"
+                    aria-label={t.brandTipAria} aria-expanded={tipOpen}
+                    onClick={() => setTipOpen((o) => !o)}>i</button>
+            <span className={`brand-tip ${tipOpen ? "open" : ""}`} role="tooltip">
+              <span className="brand-tip-chain">{t.brandTipChain}</span>
+              <span className="brand-tip-body">{t.brandTip}</span>
+              <span className="brand-tip-claim">{t.brandTipClaim}</span>
+            </span>
+          </span>
           <span className="sep"/>
           <small>{t.subtitle}</small>
         </div>

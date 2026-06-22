@@ -5,6 +5,10 @@ window.Bh.i18n = window.Bh.i18n || {};
 window.Bh.i18n.COPY = {
   it: {
     subtitle: "50 curiosità di Palermo",
+    brandTipAria: "Cosa significa Bal'harm",
+    brandTipChain: "Panormos → Balarm → Palermo",
+    brandTip: "Era il nome arabo di Palermo. Sotto l'Emirato di Sicilia (831–1072), dal greco Panormos «tutto-porto», la città fu una capitale del Mediterraneo: i giardini, i qanat e la Conca d'Oro nascono qui.",
+    brandTipClaim: "Accendi le luci e ritrova la città sotto la città.",
     filters: "Filtra per tema",
     timeline: "Linea del tempo",
     timelineYear: "Tutte le epoche",
@@ -48,6 +52,10 @@ window.Bh.i18n.COPY = {
   },
   en: {
     subtitle: "50 curiosities about Palermo",
+    brandTipAria: "What Bal'harm means",
+    brandTipChain: "Panormos → Balarm → Palermo",
+    brandTip: "It was the Arabic name of Palermo. Under the Emirate of Sicily (831–1072), from the Greek Panormos, 'all-harbour', the city became a capital of the Mediterranean: its gardens, its qanats and the Conca d'Oro were born here.",
+    brandTipClaim: "Light it up and find the city beneath the city.",
     filters: "Filter by theme",
     timeline: "Timeline",
     timelineYear: "All eras",
