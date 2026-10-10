@@ -11,16 +11,21 @@ window.Bh.lib = window.Bh.lib || {};
   const FADE_IN_MS = 1800;
   const FADE_OUT_MS = 700;
 
+  // Gesture events that grant user activation. pointerdown is not one of them
+  // for touch input, which is why the old retry never fired on phones.
+  const GESTURES = ["pointerup", "touchend", "click", "keydown"];
+
   function useAmbientAudio(initialOn = true) {
-    // Callers pass `false` on mobile so we don't even attempt autoplay there
-    // (mobile browsers block it permanently after the first refusal). The
-    // mobile UI shows a small consent popup post-splash instead.
+    // Desktop passes `true` and tries to autoplay with the splash. Phones pass
+    // `false`: the splash gate ("Entra") calls start() inside the tap, the
+    // one place where both iOS and Android let audio begin.
     const [on, setOn] = useState(initialOn);
     const audioRef = useRef(null);
+    const graphRef = useRef(null);   // { ctx, gain } once built
     const fadeRef = useRef(0);
     const retryRef = useRef(null);
 
-    useEffect(() => {
+    const ensureAudio = () => {
       if (!audioRef.current) {
         const a = new Audio(AMBIENT_URL);
         a.loop = true;
@@ -28,39 +33,82 @@ window.Bh.lib = window.Bh.lib || {};
         a.volume = 0;
         audioRef.current = a;
       }
-      const a = audioRef.current;
+      return audioRef.current;
+    };
+
+    // iOS Safari ignores HTMLMediaElement.volume (always 1), so level and
+    // fades go through a Web Audio GainNode. Built only inside a gesture: a
+    // context created without one starts suspended and would mute the element.
+    const ensureGraph = () => {
+      if (graphRef.current) return graphRef.current;
+      const AC = window.AudioContext || window.webkitAudioContext;
+      if (!AC) return null;
+      try {
+        const a = ensureAudio();
+        const ctx = new AC();
+        const gain = ctx.createGain();
+        gain.gain.value = a.volume;   // carry over a fade already in progress
+        ctx.createMediaElementSource(a).connect(gain).connect(ctx.destination);
+        a.volume = 1;
+        graphRef.current = { ctx, gain };
+      } catch (e) {
+        console.warn("[Bh] Web Audio unavailable, using element volume:", e.message);
+        graphRef.current = null;
+      }
+      return graphRef.current;
+    };
+    const getVol = () => graphRef.current ? graphRef.current.gain.gain.value : ensureAudio().volume;
+    const setVol = (v) => {
+      if (graphRef.current) graphRef.current.gain.gain.value = v;
+      else ensureAudio().volume = v;
+    };
+
+    // Must run synchronously inside a user gesture handler.
+    const unlock = () => {
+      const g = ensureGraph();
+      if (g && g.ctx.state !== "running") g.ctx.resume().catch(() => {});
+      const a = ensureAudio();
+      if (a.paused) a.play().catch(() => {});
+    };
+    const start = () => { unlock(); setOn(true); };
+
+    useEffect(() => {
+      const a = ensureAudio();
       cancelAnimationFrame(fadeRef.current);
 
       if (on) {
-        const tryPlay = () => a.play()
+        a.play()
           .then(() => console.log("[Bh] ambient audio playing"))
           .catch((e) => {
             console.warn("[Bh] ambient autoplay blocked, will retry on next gesture:", e.message);
-            // Hook a one-shot retry on the very first user gesture.
+            // One-shot retry on the very first real gesture.
             if (!retryRef.current) {
               retryRef.current = () => {
-                document.removeEventListener("pointerdown", retryRef.current, true);
+                GESTURES.forEach((ev) => document.removeEventListener(ev, retryRef.current, true));
                 retryRef.current = null;
-                if (audioRef.current && a.paused) a.play().catch(() => {});
+                unlock();
               };
-              document.addEventListener("pointerdown", retryRef.current, true);
+              GESTURES.forEach((ev) => document.addEventListener(ev, retryRef.current, true));
             }
           });
-        tryPlay();
         const start = performance.now();
-        const from = a.volume;
+        const from = getVol();
         const tick = () => {
           const t = Math.min(1, (performance.now() - start) / FADE_IN_MS);
-          a.volume = from + (TARGET_VOLUME - from) * t;
+          setVol(from + (TARGET_VOLUME - from) * t);
           if (t < 1) fadeRef.current = requestAnimationFrame(tick);
         };
         fadeRef.current = requestAnimationFrame(tick);
       } else {
+        if (retryRef.current) {
+          GESTURES.forEach((ev) => document.removeEventListener(ev, retryRef.current, true));
+          retryRef.current = null;
+        }
         const start = performance.now();
-        const from = a.volume;
+        const from = getVol();
         const tick = () => {
           const t = Math.min(1, (performance.now() - start) / FADE_OUT_MS);
-          a.volume = from * (1 - t);
+          setVol(from * (1 - t));
           if (t < 1) fadeRef.current = requestAnimationFrame(tick);
           else a.pause();
         };
@@ -70,7 +118,7 @@ window.Bh.lib = window.Bh.lib || {};
       return () => cancelAnimationFrame(fadeRef.current);
     }, [on]);
 
-    return [on, setOn];
+    return [on, setOn, start];
   }
 
   window.Bh.lib.audio = { useAmbientAudio };

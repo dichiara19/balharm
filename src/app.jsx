@@ -44,13 +44,14 @@
     const modalTimerRef = useRef(null);
     const [tour, setTour] = useState(null);
     const [shared, setShared] = useState(false);
-    // Try to start the ambient audio as the splash appears, on both
-    // platforms — it pulls the user into the world before the map is even
-    // visible. On mobile the browser will block the initial play() (no
-    // gesture yet); the catch handler in audio.js auto-retries on the very
-    // first pointerdown, so any tap kicks it off.
-    const [audioOn, setAudioOn] = useAmbientAudio(true);
-    const [loading, setLoading] = useState(true);
+    // Desktop tries to start the ambient audio as the splash appears (and
+    // retries on the first gesture if blocked). Phones get an entry gate on
+    // the splash instead: "Entra" starts audio and asks for fullscreen inside
+    // the same tap, which is the only reliable way on iOS and Android.
+    const [audioOn, setAudioOn, startAudio] = useAmbientAudio(!isMobile);
+    const [loading, setLoading] = useState(true);      // tiles not ready yet
+    const [entered, setEntered] = useState(!isMobile); // gate passed (mobile)
+    const showLoader = loading || !entered;
     // Compass: driven imperatively (no React state) so camera rotation never
     // re-renders the tree. app writes the rotation straight to the SVG <g>.
     const compassRef = useRef(null);
@@ -99,11 +100,33 @@
     // so we record genuine user actions, not React's first commit. ---
     const readyTracked = useRef(false);
     useEffect(() => {
-      if (!loading && !readyTracked.current) {
+      if (!showLoader && !readyTracked.current) {
         readyTracked.current = true;
         track(EVENTS.APP_READY, { platform: isMobile ? "mobile" : "desktop", lang });
       }
-    }, [loading]);
+    }, [showLoader]);
+
+    // Entry gate (mobile). Fullscreen first, then audio: both need the tap's
+    // user activation. iPhone Safari has no element fullscreen, so it's
+    // feature-detected and simply skipped there.
+    const enter = (withAudio) => {
+      const el = document.documentElement;
+      const req = el.requestFullscreen || el.webkitRequestFullscreen;
+      let fullscreen = "unsupported";
+      if (req && !document.fullscreenElement) {
+        fullscreen = "requested";
+        try {
+          const p = req.call(el, { navigationUI: "hide" });
+          if (p && p.catch) p.catch(() => {});
+        } catch (e) { fullscreen = "denied"; }
+      }
+      if (withAudio) startAudio();
+      setEntered(true);
+      track(EVENTS.GATE_ENTER, { audio: withAudio, fullscreen });
+    };
+    // Turning audio on from the header goes through startAudio() too, so on
+    // iOS it's unlocked inside that tap.
+    const onAudioToggle = (next) => next ? startAudio() : setAudioOn(false);
 
     const langInit = useRef(true);
     useEffect(() => {
@@ -280,7 +303,7 @@
         <Cornice compassRef={compassRef} />
 
         <TopBar lang={lang} setLang={setLang}
-                audioOn={audioOn} setAudioOn={setAudioOn}
+                audioOn={audioOn} setAudioOn={onAudioToggle}
                 tourActive={tour !== null} onTour={onTourToggle} />
 
         {!isMobile && (
@@ -353,7 +376,7 @@
           </BottomSheet>
         )}
 
-        <div className={`loader ${loading ? "" : "hide"}`}>
+        <div className={`loader ${showLoader ? "" : "hide"}`}>
           <div className="loader-inner">
             <svg className="loader-mark" viewBox="-30 -30 60 60" aria-hidden="true">
               <Star r1={26} r2={12} stroke="#c9a24a" />
@@ -362,13 +385,28 @@
             </svg>
             <div className="loader-title">Bal'harm</div>
             <div className="loader-tagline">{t.subtitle}</div>
-            <div className="loader-bar"><span/></div>
-            <div className={`loader-status ${loaderFade ? "fade" : ""}`}>
-              <span>{(t.loadingPhrases || [t.loading])[loaderKw % (t.loadingPhrases?.length || 1)]}</span>
-              <span className="dots">
-                <span className="dot"/><span className="dot"/><span className="dot"/>
-              </span>
-            </div>
+            {loading ? (
+              <>
+                <div className="loader-bar"><span/></div>
+                <div className={`loader-status ${loaderFade ? "fade" : ""}`}>
+                  <span>{(t.loadingPhrases || [t.loading])[loaderKw % (t.loadingPhrases?.length || 1)]}</span>
+                  <span className="dots">
+                    <span className="dot"/><span className="dot"/><span className="dot"/>
+                  </span>
+                </div>
+              </>
+            ) : (
+              <div className="loader-status">{t.gateReady}</div>
+            )}
+            {!entered && (
+              <div className="loader-gate">
+                <button type="button" className="gate-enter" onClick={() => enter(true)}>
+                  <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 10v4h4l5 4V6L7 10H3z"/><path d="M16 8c2 1.5 2 6.5 0 8"/></svg>
+                  {t.enter}
+                </button>
+                <button type="button" className="gate-muted" onClick={() => enter(false)}>{t.enterMuted}</button>
+              </div>
+            )}
           </div>
         </div>
       </div>

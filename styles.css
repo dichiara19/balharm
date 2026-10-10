@@ -868,6 +868,50 @@ body {
   50%      { opacity: 1.00; transform: translateY(-3px); }
 }
 
+/* Mobile entry gate — one tap that starts audio and goes fullscreen. */
+.loader-gate {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  animation: fadeIn .6s ease;
+}
+.gate-enter {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  min-width: 200px;
+  min-height: 50px;
+  padding: 0 32px;
+  background: var(--gold);
+  color: var(--bg-2);
+  border: 0;
+  font-family: var(--mono);
+  font-size: 12px;
+  letter-spacing: 0.28em;
+  text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 10px 30px rgba(201, 162, 74, 0.22);
+  transition: transform .12s ease, background-color .2s ease;
+}
+.gate-enter svg { width: 18px; height: 18px; fill: none; stroke: currentColor; stroke-width: 1.8; }
+.gate-enter:active { transform: scale(0.97); background: var(--gold-soft); }
+.gate-muted {
+  min-height: 44px;
+  padding: 0 14px;
+  background: none;
+  border: 0;
+  color: var(--muted);
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  cursor: pointer;
+}
+.gate-muted:active { color: var(--gold); }
+
 /* === Compass === */
 .compass {
   position: absolute;

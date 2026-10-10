@@ -27,6 +27,7 @@ window.Bh.lib = window.Bh.lib || {};
     LANG_CHANGE:     "lang_change",
     AUDIO_TOGGLE:    "audio_toggle",
     GEO_LOCATE:      "geo_locate",        // visitor located themselves on the map
+    GATE_ENTER:      "gate_enter",        // mobile entry gate passed (audio / fullscreen)
   };
 
   // The single dispatch seam. Safe before gtag's script loads (it buffers via
