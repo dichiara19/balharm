@@ -77,7 +77,8 @@ window.Bh.lib = window.Bh.lib || {};
       cancelAnimationFrame(fadeRef.current);
 
       if (on) {
-        a.play()
+        // start() may already have played it inside the gesture.
+        (a.paused ? a.play() : Promise.resolve())
           .then(() => console.log("[Bh] ambient audio playing"))
           .catch((e) => {
             console.warn("[Bh] ambient autoplay blocked, will retry on next gesture:", e.message);
@@ -91,10 +92,10 @@ window.Bh.lib = window.Bh.lib || {};
               GESTURES.forEach((ev) => document.addEventListener(ev, retryRef.current, true));
             }
           });
-        const start = performance.now();
+        const t0 = performance.now();
         const from = getVol();
         const tick = () => {
-          const t = Math.min(1, (performance.now() - start) / FADE_IN_MS);
+          const t = Math.min(1, (performance.now() - t0) / FADE_IN_MS);
           setVol(from + (TARGET_VOLUME - from) * t);
           if (t < 1) fadeRef.current = requestAnimationFrame(tick);
         };
@@ -104,10 +105,10 @@ window.Bh.lib = window.Bh.lib || {};
           GESTURES.forEach((ev) => document.removeEventListener(ev, retryRef.current, true));
           retryRef.current = null;
         }
-        const start = performance.now();
+        const t0 = performance.now();
         const from = getVol();
         const tick = () => {
-          const t = Math.min(1, (performance.now() - start) / FADE_OUT_MS);
+          const t = Math.min(1, (performance.now() - t0) / FADE_OUT_MS);
           setVol(from * (1 - t));
           if (t < 1) fadeRef.current = requestAnimationFrame(tick);
           else a.pause();
