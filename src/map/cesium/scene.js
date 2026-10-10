@@ -270,8 +270,26 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     });
   }
 
+  // Height (ellipsoidal metres) of the 3D-tiles surface at `cart`, or
+  // undefined when the sample can't be trusted. The second argument of
+  // scene.sampleHeight is objectsToExclude: pass our own entities (bells,
+  // auras, markers) so the ray lands on the roof below them — never the
+  // tileset, or the ray falls through to the invisible globe at ~0 m.
+  // Palermo's sea level is ~45 m ellipsoidal (La Cala samples 44.9), roofs
+  // 60–120 m, Monte Pellegrino ≤ ~650 m. Anything under SAMPLE_MIN_H is the
+  // bare globe or a coarse placeholder tile, not a real surface.
+  const SAMPLE_MIN_H = 35;
+  const SAMPLE_MAX_H = 700;
+  function sampleGround(scene, cart, exclude) {
+    let h;
+    try { h = scene.sampleHeight(cart, exclude); }
+    catch (e) { return undefined; }
+    if (h == null || isNaN(h) || h < SAMPLE_MIN_H || h > SAMPLE_MAX_H) return undefined;
+    return h;
+  }
+
   window.Bh.map.cesium.scene = {
     CENTER, BOUNDS, MAX_REVEALS,
-    makeDuotoneShader, setShaderReveals, buildViewer, loadBaseTileset,
+    makeDuotoneShader, setShaderReveals, buildViewer, loadBaseTileset, sampleGround,
   };
 })();

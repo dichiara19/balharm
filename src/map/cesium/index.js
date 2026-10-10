@@ -102,7 +102,10 @@ window.Bh.map = window.Bh.map || {};
     const stageLights = {};
 
     let baseTileset = null;
-    let allLocked = false;
+
+    // Entities a roof-sampling ray must pass through to reach the 3D tiles:
+    // every bell / aura, plus the "you are here" marker while it exists.
+    const sampleExclude = pins.entities.slice();
 
     function fireInitialLoadOnce() {
       if (initialLoadFired) return;
@@ -113,15 +116,7 @@ window.Bh.map = window.Bh.map || {};
 
     sceneMod.loadBaseTileset(scene, duotoneShader).then((ts) => {
       baseTileset = ts;
-      // Sample 50 pins × N points synchronously can block the main thread
-      // for several seconds when tiles are still streaming. Chunk it: 5 pins
-      // per microtask, yielding between batches so the splash + first frame
-      // stay responsive.
-      (function chunkedSample(i) {
-        for (let n = 0; n < 5 && i < items.length; n++, i++) pins.sampleGroundFor(items[i], ts);
-        if (i < items.length) setTimeout(() => chunkedSample(i), 0);
-      })(0);
-      ts.tileLoad?.addEventListener?.(() => debouncedReposition());
+      ts.allTilesLoaded.addEventListener(sampleRoofs);
       ts.initialTilesLoaded?.addEventListener?.(fireInitialLoadOnce);
 
       // OSM refinement disabled — the LANDMARKS table now carries
@@ -131,51 +126,58 @@ window.Bh.map = window.Bh.map || {};
       // to re-enable later for a specific landmark.
     }).catch((err) => { console.warn("Cesium ion 3D Tiles failed:", err); scene.globe.show = true; });
 
-    let repoTimer = null;
-    function debouncedReposition() {
-      if (allLocked) return;
-      if (repoTimer) return;
-      // Bumped 1500 → 3000 ms so the heavy sample loop runs at most once every
-      // 3 s during the busy tile-streaming window — keeps interaction smooth.
-      repoTimer = setTimeout(() => {
-        repoTimer = null;
-        // Chunked, async sampling so a slow tileLoad burst doesn't stall the
-        // main thread. Lights piggyback on the final chunk.
-        let pendingPins = 0;
-        (function chunkedReposition(i) {
-          for (let n = 0; n < 5 && i < items.length; n++, i++) {
-            const c = items[i];
-            const d = pins.pinData[c.id];
-            if (!d?.sampled) {
-              pins.sampleGroundFor(c, baseTileset);
-              if (!pins.pinData[c.id]?.sampled) pendingPins++;
-            }
-          }
-          if (i < items.length) { setTimeout(() => chunkedReposition(i), 0); return; }
-          lightsMod.repositionAll(stageLights, scene, [baseTileset]);
-          const pendingLights = Object.values(stageLights).filter((l) => !l.sampled).length;
-          if (pendingPins === 0 && pendingLights === 0) {
-            allLocked = true;
-            console.log("[Bh] all pins + lights locked; tileLoad listener idle");
-          }
-        })(0);
-      }, 3000);
+    // Roof sampling: each sample is an extra render + readPixels, so a pass
+    // only runs with the camera at rest (never mid-drag / mid-flight) and the
+    // view's tiles fully loaded (tilesLoaded — the only moment sampleHeight
+    // sees full-detail geometry; a pin locks on its first valid sample).
+    // Triggered by allTilesLoaded and by camera moveEnd, whichever comes
+    // last. Each pass only samples pins still unlocked *and* in view (see
+    // pins.sampleGroundFor), so it costs nothing for the rest; once all are
+    // locked the listeners go away. Chunked (5 pins per task) so a pass never
+    // stalls the main thread; a camera move aborts it until the next rest.
+    let sampling = false, cameraMoving = false, roofsLocked = false;
+    function sampleRoofs() {
+      if (sampling || roofsLocked || cameraMoving || !baseTileset?.tilesLoaded) return;
+      sampling = true;
+      (function chunk(i) {
+        if (cameraMoving) { sampling = false; return; }
+        for (let n = 0; n < 5 && i < items.length; n++, i++) pins.sampleGroundFor(items[i], sampleExclude);
+        if (i < items.length) { setTimeout(() => chunk(i), 0); return; }
+        lightsMod.repositionAll(stageLights, scene, sampleExclude);
+        sampling = false;
+        const pending = items.filter((c) => !pins.pinData[c.id]?.sampled).length
+          + Object.values(stageLights).filter((l) => !l.sampled).length;
+        if (pending === 0) {
+          roofsLocked = true;
+          baseTileset.allTilesLoaded.removeEventListener(sampleRoofs);
+          console.log("[Bh] all pins + lights locked; roof sampling off");
+        }
+      })(0);
     }
+    viewer.camera.moveStart.addEventListener(() => { cameraMoving = true; });
+    viewer.camera.moveEnd.addEventListener(() => { cameraMoving = false; sampleRoofs(); });
 
-    // Click + hover. Stage-light cones are translucent and sit *in front of*
-    // the bells from the camera's POV — a plain pick() would always return
-    // the cone instead of the bell. drillPick searches in depth and we keep
-    // the first hit that carries a curiosityId (i.e. a real pin).
-    // One drill resolves either a real bell (curiosityId) or a collapsed
-    // cluster bell (clusterIndex). When collapsed the members are hidden so the
-    // cluster wins; when expanded the cluster is hidden so a member wins.
+    // Click + hover. A single pick() resolves either a real bell (curiosityId)
+    // or a collapsed cluster bell (clusterIndex): the two never overlap — when
+    // collapsed the members are hidden, when expanded the cluster is hidden.
+    // (drillPick used to be needed to see through the translucent stage-light
+    // cones; with the cones gone it only multiplied the pick passes per event.)
+    // Exception: the "you are here" star billboard ignores depth and floats in
+    // front of nearby bells (with its pulse ring over their auras), so only
+    // when it is the top hit we drill a few levels for the bell behind it.
+    function hitOf(p) {
+      const cid = p?.id?.curiosityId ?? p?.primitive?.curiosityId;
+      if (cid != null) return { kind: "curiosity", id: cid };
+      const ci = p?.id?.clusterIndex ?? p?.primitive?.clusterIndex;
+      if (ci != null) return { kind: "cluster", id: ci };
+      return null;
+    }
     function pickPinOrCluster(windowPos) {
-      const drilled = scene.drillPick(windowPos, 6) || [];
-      for (const p of drilled) {
-        const cid = p?.id?.curiosityId ?? p?.primitive?.curiosityId;
-        if (cid != null) return { kind: "curiosity", id: cid };
-        const ci = p?.id?.clusterIndex ?? p?.primitive?.clusterIndex;
-        if (ci != null) return { kind: "cluster", id: ci };
+      const p = scene.pick(windowPos);
+      if (p?.id?.id !== "user-star") return hitOf(p);
+      for (const q of scene.drillPick(windowPos, 4)) {
+        const hit = hitOf(q);
+        if (hit) return hit;
       }
       return null;
     }
@@ -313,14 +315,63 @@ window.Bh.map = window.Bh.map || {};
       if (L) flyAroundLandmark(L);
     }, Cesium.ScreenSpaceEventType.LEFT_CLICK);
 
-    handler.setInputAction((e) => {
-      const hit = pickPinOrCluster(e.endPosition);
-      scene.canvas.style.cursor = hit ? "pointer" : "";
-      if (onHoverCb) {
-        if (hit && hit.kind === "curiosity") onHoverCb(hit.id, e.endPosition.x, e.endPosition.y);
-        else onHoverCb(null);
+    // Hover. A pick is a full extra render pass + readPixels, so at most one
+    // runs per HOVER_PICK_MS: straight in the MOUSE_MOVE handler, or from a
+    // trailing timeout for the latest position. Deliberately not in a rAF
+    // callback: there it lands right after Cesium has submitted its frame and
+    // readPixels stalls until the GPU finishes it (measured pick p95 ~39 ms vs
+    // ~16 ms from the handler). While a button / finger is down the camera is
+    // being dragged: hover is meaningless then, so we skip picking altogether
+    // (and drop any stale tooltip once). Consumers are only notified on an
+    // actual change — same-id moves still report the new position so the
+    // tooltip can follow the cursor.
+    const HOVER_PICK_MS = 16;
+    let dragging = false;
+    let hoverTimer = 0;
+    let lastPickAt = 0;
+    const hoverPos = new Cesium.Cartesian2();
+    let lastHoverId = null;
+    let lastCursorHit = false;
+
+    function applyHover(hit, pos) {
+      const isHit = !!hit;
+      if (isHit !== lastCursorHit) {
+        lastCursorHit = isHit;
+        scene.canvas.style.cursor = isHit ? "pointer" : "";
       }
+      const id = hit && hit.kind === "curiosity" ? hit.id : null;
+      if (id == null && lastHoverId == null) return;
+      lastHoverId = id;
+      if (onHoverCb) onHoverCb(id, pos.x, pos.y);
+    }
+
+    const setDragging = (v) => () => { dragging = v; };
+    for (const t of ["LEFT", "RIGHT", "MIDDLE"]) {
+      handler.setInputAction(setDragging(true), Cesium.ScreenSpaceEventType[`${t}_DOWN`]);
+      handler.setInputAction(setDragging(false), Cesium.ScreenSpaceEventType[`${t}_UP`]);
+    }
+    handler.setInputAction(setDragging(true), Cesium.ScreenSpaceEventType.PINCH_START);
+    handler.setInputAction(setDragging(false), Cesium.ScreenSpaceEventType.PINCH_END);
+
+    handler.setInputAction((e) => {
+      if (dragging) {
+        if (lastCursorHit || lastHoverId != null) applyHover(null, hoverPos);
+        return;
+      }
+      // endPosition is a scratch object Cesium reuses — copy it.
+      Cesium.Cartesian2.clone(e.endPosition, hoverPos);
+      if (hoverTimer) return;
+      const wait = HOVER_PICK_MS - (performance.now() - lastPickAt);
+      if (wait <= 0) hoverPick();
+      else hoverTimer = setTimeout(hoverPick, wait);
     }, Cesium.ScreenSpaceEventType.MOUSE_MOVE);
+
+    function hoverPick() {
+      hoverTimer = 0;
+      if (dragging) return;
+      lastPickAt = performance.now();
+      applyHover(pickPinOrCluster(hoverPos), hoverPos);
+    }
 
     // requestRenderMode is on, so we can't rely on every-frame preRender for
     // animation. We attach it to preUpdate (fires when scene.requestRender is
@@ -365,14 +416,13 @@ window.Bh.map = window.Bh.map || {};
     const STAR_FLOAT = 72;
     let userMarker = null;
     let userAnimAttached = false;
+    // Fallback: typical street level in the old town (ellipsoidal metres —
+    // Quattro Canti samples ~57) when the user's spot isn't rendered yet.
     function sampleUserGround(lng, lat) {
-      if (baseTileset && scene.sampleHeight) {
-        try {
-          const h = scene.sampleHeight(Cesium.Cartographic.fromDegrees(lng, lat), [baseTileset]);
-          if (h != null && !isNaN(h) && h <= 700 && h >= -50) return h;
-        } catch (e) {}
-      }
-      return 30;
+      const STREET_H = 55;
+      if (!baseTileset) return STREET_H;
+      const h = sceneMod.sampleGround(scene, Cesium.Cartographic.fromDegrees(lng, lat), sampleExclude);
+      return h === undefined ? STREET_H : h;
     }
     function animateUser() {
       if (!userMarker) return;
@@ -384,11 +434,8 @@ window.Bh.map = window.Bh.map || {};
         lng, lat, groundH + STAR_FLOAT + 4 * Math.sin(t * 1.25));    // gentle float
       const PERIOD = 3.4, MAXR = 95;
       const phase = (t % PERIOD) / PERIOD;
-      const r = 8 + phase * MAXR;
-      userMarker.pulse.ellipse.semiMajorAxis = r;
-      userMarker.pulse.ellipse.semiMinorAxis = r;
-      userMarker.pulse.ellipse.material = new Cesium.ColorMaterialProperty(
-        Cesium.Color.fromCssColorString("#e7c879").withAlpha(0.30 * (1 - phase)));
+      userMarker.pulseR = 8 + phase * MAXR;
+      userMarker.pulseColor.alpha = 0.30 * (1 - phase);
       scene.requestRender();
     }
     function clearUserPosition() {
@@ -396,6 +443,9 @@ window.Bh.map = window.Bh.map || {};
       viewer.entities.remove(userMarker.star);
       viewer.entities.remove(userMarker.aura);
       viewer.entities.remove(userMarker.pulse);
+      for (const e of [userMarker.star, userMarker.aura, userMarker.pulse]) {
+        sampleExclude.splice(sampleExclude.indexOf(e), 1);
+      }
       userMarker = null;
       scene.requestRender();
     }
@@ -433,17 +483,24 @@ window.Bh.map = window.Bh.map || {};
           classificationType: Cesium.ClassificationType.NONE,
         },
       });
+      // The pulse radius/alpha change every frame, so they are CallbackProperty
+      // values read by a dynamic updater. Assigning plain values per frame
+      // instead made the entity's geometry "static but changed": the whole
+      // batch was rebuilt through the createGeometry workers on every frame.
+      const pulseColor = Cesium.Color.fromCssColorString("#e7c879").withAlpha(0.3);
+      const pulseRadius = new Cesium.CallbackProperty(() => userMarker ? userMarker.pulseR : 8, false);
       const pulse = viewer.entities.add({
         id: "user-pulse",
         position: Cesium.Cartesian3.fromDegrees(lng, lat),
         ellipse: {
-          semiMajorAxis: 8, semiMinorAxis: 8, height: groundH + 0.6,
+          semiMajorAxis: pulseRadius, semiMinorAxis: pulseRadius, height: groundH + 0.6,
           material: new Cesium.ColorMaterialProperty(
-            Cesium.Color.fromCssColorString("#e7c879").withAlpha(0.3)),
+            new Cesium.CallbackProperty(() => pulseColor, false)),
           classificationType: Cesium.ClassificationType.NONE,
         },
       });
-      userMarker = { star, aura, pulse, lng, lat, groundH, t0: performance.now() };
+      userMarker = { star, aura, pulse, pulseR: 8, pulseColor, lng, lat, groundH, t0: performance.now() };
+      sampleExclude.push(star, aura, pulse);
       if (!userAnimAttached) { scene.preRender.addEventListener(animateUser); userAnimAttached = true; }
       scene.requestRender();
       if (opts.fly === true) flyToUser(lng, lat, groundH);

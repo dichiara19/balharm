@@ -9,6 +9,8 @@ window.Bh.map = window.Bh.map || {};
 window.Bh.map.cesium = window.Bh.map.cesium || {};
 
 (function () {
+  const sceneMod = window.Bh.map.cesium.scene;
+
   // ── Asset paths ──────────────────────────────────────────────────────────
   const BELL_MODEL_URI = "uploads/elements/bell.glb";
   const BELL_FILENAME  = "Single_small_brass_h_#4-1778336929730.mp3";
@@ -206,6 +208,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     const { pinOffsets, clusters, clusterOf } = computeClustering(items);
 
     const pinData = {};      // id -> { groundH, entity, aura, sampled, offset }
+    // Every bell / cluster bell / aura we add. Ground sampling must look
+    // *through* them: a bell parked at its default height sits right above
+    // the roof it is trying to measure.
+    const entities = [];
     const ringingPins = {};  // id -> { start (perfNow ms) }
     const clusterData = {};  // clusterIndex -> { entity, aura, centre, groundH, sampled }
 
@@ -263,6 +269,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
         },
       });
       entity.curiosityId = c.id;
+      entities.push(entity);
 
       // Aura — a single horizontal ellipse painted with a radial-gradient PNG
       // so the falloff is rasterised, smooth, and never shows concentric rings.
@@ -284,6 +291,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
         },
       });
       aura.curiosityId = c.id;
+      entities.push(aura);
 
       pinData[c.id] = { groundH: baseH, entity, aura, sampled: false };
     }
@@ -336,6 +344,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
         },
       });
       entity.clusterIndex = idx;
+      entities.push(entity);
 
       const aura = viewer.entities.add({
         id: `cluster-${idx}-aura`,
@@ -351,6 +360,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
         },
       });
       aura.clusterIndex = idx;
+      entities.push(aura);
 
       clusterData[idx] = { entity, aura, groundH: baseH, sampled: false };
     }
@@ -397,24 +407,35 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     const SAMPLE_OFFSETS_M = [
       [0, 0], [12, 0], [-12, 0], [0, 12], [0, -12],
     ];
-    function sampleGroundFor(c, baseTileset) {
+    // sampleHeight only sees tiles rendered in the current view, at the LOD
+    // they are rendered at. So only sample pins that are on screen and close
+    // enough for their roof tiles to be detailed — the rest keep waiting (at
+    // no cost) until the camera brings them in. A pin locks on its first
+    // valid sample, so a coarse far-away tile must never get the chance.
+    const SAMPLE_MAX_DIST_M = 2000;
+    const scratchSphere = new Cesium.BoundingSphere();
+    function inSampleRange(c, data) {
+      const cam = scene.camera;
+      scratchSphere.center = centrePosition(c, data.groundH);
+      scratchSphere.radius = 60;
+      if (Cesium.Cartesian3.distance(cam.positionWC, scratchSphere.center) > SAMPLE_MAX_DIST_M) return false;
+      const cull = cam.frustum.computeCullingVolume(cam.positionWC, cam.directionWC, cam.upWC);
+      return cull.computeVisibility(scratchSphere) !== Cesium.Intersect.OUTSIDE;
+    }
+
+    // `exclude`: our entities plus any others the caller knows about (the
+    // "you are here" marker), so the rays only hit the 3D tiles.
+    function sampleGroundFor(c, exclude) {
       const data = pinData[c.id]; if (!data) return;
       if (data.sampled) return;
-      if (!baseTileset || !scene.sampleHeight) return;
+      if (!inSampleRange(c, data)) return;
       const off = pinOffsets[c.id] || { dxM: 0, dyM: 0 };
       let bestH = -Infinity;
       for (const [dxM, dyM] of SAMPLE_OFFSETS_M) {
         const lng = c.lng + metersToLngDeg(off.dxM + dxM, c.lat);
         const lat = c.lat + metersToLatDeg(off.dyM + dyM);
-        const cart = Cesium.Cartographic.fromDegrees(lng, lat);
-        let h;
-        try { h = scene.sampleHeight(cart, [baseTileset]); }
-        catch (e) { continue; }
-        // Cap of 700 m allows Castello Utveggio (~400 m on Monte Pellegrino)
-        // and Monte Pellegrino itself (~600 m) while still rejecting Cesium's
-        // garbage sample values that crop up while tiles are still streaming.
-        if (h === undefined || h === null || isNaN(h) || h > 700 || h < -50) continue;
-        if (h > bestH) bestH = h;
+        const h = sceneMod.sampleGround(scene, Cesium.Cartographic.fromDegrees(lng, lat), exclude);
+        if (h !== undefined && h > bestH) bestH = h;
       }
       if (bestH === -Infinity) return;
       // `altitude` acts as a floor, not just a seed: on Monte Pellegrino the
@@ -562,6 +583,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       pinData,
       pinOffsets,
       clusters,
+      entities,
       sampleGroundFor,
       ringBell,
       tick,

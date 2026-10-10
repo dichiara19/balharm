@@ -10,6 +10,8 @@ window.Bh.map = window.Bh.map || {};
 window.Bh.map.cesium = window.Bh.map.cesium || {};
 
 (function () {
+  const sceneMod = window.Bh.map.cesium.scene;
+
   const DEFAULTS = {
     sourceOffsetY: 320,    // metres above roof — lamp altitude
     targetOffsetY: 12,     // metres above roof — where the cone meets the building
@@ -130,18 +132,15 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     light.parts.halo.position = Cesium.Cartesian3.fromDegrees(lng, lat, sourceY + 2);
   }
 
-  function repositionAll(lights, scene, tilesets) {
-    const ts = (tilesets || []).filter(Boolean);
-    if (!ts.length || !scene.sampleHeight) return;
+  // `exclude`: entities the roof ray must pass through (bells, auras…); the
+  // light's own cone/lamp/halo sit right above the roof and are added here.
+  function repositionAll(lights, scene, exclude = []) {
     Object.values(lights).forEach((light) => {
       if (light.sampled) return;
       const { lng, lat, key } = light.landmark;
       const cart = Cesium.Cartographic.fromDegrees(lng, lat);
-      let h;
-      try { h = scene.sampleHeight(cart, ts); }
-      catch (e) { h = undefined; }
-      // Cap 700 m to cover Castello Utveggio / Monte Pellegrino summits.
-      if (h === undefined || h === null || isNaN(h) || h > 700 || h < -50) return;
+      const h = sceneMod.sampleGround(scene, cart, exclude.concat(Object.values(light.parts)));
+      if (h === undefined) return;
       light.roofH = h;
       light.sampled = true;
       reposition(light);
