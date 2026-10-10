@@ -142,19 +142,43 @@ window.Bh.map = window.Bh.map || {};
     }
 
     // Cache-warming pass: while the splash still covers the canvas, jump the
-    // camera through two intermediate zoom levels above the centre and wait
-    // for each level's tiles to stream in. The first user zooms then hit a
-    // warm cache instead of stalling on cold downloads. Bounded by timeouts
-    // so a slow network can't hold the splash hostage; on finish the camera
-    // returns to the exact initial view.
-    const PRELOAD_LEVELS = [
-      { height: 700, pitchDeg: -45 },
-      { height: 450, pitchDeg: -45 },
-    ];
-    const PRELOAD_STEP_TIMEOUT_MS = 2500;
-    const PRELOAD_TOTAL_MS = 6000;
+    // camera through a grid of points across central Palermo at two zoom
+    // levels and wait for each point's tiles to stream in. The first user
+    // zooms and pans then hit a warm cache instead of stalling on cold
+    // downloads. Bounded by timeouts so a slow network can't hold the splash
+    // hostage; on finish the camera returns to the exact initial view.
+    //
+    // Desktop: 3×3 grid at 700 m covering ~5×5 km of the historic centre
+    // (spacing ~1.6 km), plus the five main monuments at 450 m.
+    // Mobile: just 3 points at 700 m (slower network, smaller tile cache).
+    const isMobilePreload = !!window.Bh?.device?.isMobile;
+    const PRELOAD_POINTS = isMobilePreload
+      ? [
+          { lat: 38.1157, lng: 13.3614, height: 700 }, // centro (Quattro Canti)
+          { lat: 38.1257, lng: 13.3614, height: 700 }, // nord
+          { lat: 38.1057, lng: 13.3614, height: 700 }, // sud
+        ]
+      : [
+          // 700 m — griglia 3×3 centrata su Quattro Canti, spaziatura ~1.6 km
+          { lat: 38.1257, lng: 13.3464, height: 700 }, // NW
+          { lat: 38.1257, lng: 13.3614, height: 700 }, // N
+          { lat: 38.1257, lng: 13.3764, height: 700 }, // NE
+          { lat: 38.1157, lng: 13.3464, height: 700 }, // W
+          { lat: 38.1157, lng: 13.3614, height: 700 }, // centro
+          { lat: 38.1157, lng: 13.3764, height: 700 }, // E
+          { lat: 38.1057, lng: 13.3464, height: 700 }, // SW
+          { lat: 38.1057, lng: 13.3614, height: 700 }, // S
+          { lat: 38.1057, lng: 13.3764, height: 700 }, // SE
+          // 450 m — cinque monumenti principali
+          { lat: 38.1157, lng: 13.3615, height: 450 }, // Quattro Canti
+          { lat: 38.1142, lng: 13.3563, height: 450 }, // Cattedrale
+          { lat: 38.1202, lng: 13.3571, height: 450 }, // Teatro Massimo
+          { lat: 38.1115, lng: 13.3530, height: 450 }, // Palazzo dei Normanni
+          { lat: 38.1252, lng: 13.3568, height: 450 }, // Teatro Politeama
+        ];
+    const PRELOAD_STEP_TIMEOUT_MS = 1500;
+    const PRELOAD_TOTAL_MS = 12000;
     function preloadZoomLevels(ts, onDone) {
-      const centre = sceneMod.CENTER;
       const savedDest = viewer.camera.position.clone();
       const savedOrient = {
         heading: viewer.camera.heading,
@@ -167,18 +191,18 @@ window.Bh.map = window.Bh.map || {};
       function finish() {
         preloading = false;
         viewer.camera.setView({ destination: savedDest, orientation: savedOrient });
-        console.log("[Bh] preload done, splash can lift");
+        console.log(`[Bh] preload done (${step}/${PRELOAD_POINTS.length} points), splash can lift`);
         onDone();
       }
       function nextStep() {
-        if (step >= PRELOAD_LEVELS.length || Date.now() - startedAt > PRELOAD_TOTAL_MS) {
+        if (step >= PRELOAD_POINTS.length || Date.now() - startedAt > PRELOAD_TOTAL_MS) {
           finish();
           return;
         }
-        const lv = PRELOAD_LEVELS[step++];
+        const lv = PRELOAD_POINTS[step++];
         viewer.camera.setView({
-          destination: Cesium.Cartesian3.fromDegrees(centre.lng, centre.lat, lv.height),
-          orientation: { heading: 0, pitch: Cesium.Math.toRadians(lv.pitchDeg), roll: 0 },
+          destination: Cesium.Cartesian3.fromDegrees(lv.lng, lv.lat, lv.height),
+          orientation: { heading: 0, pitch: Cesium.Math.toRadians(-45), roll: 0 },
         });
         const stepStart = Date.now();
         const check = () => {

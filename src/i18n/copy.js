@@ -33,8 +33,10 @@ window.Bh.i18n.COPY = {
     loading: "Stiamo lustrando i mosaici",
     loadingPhrases: [
       "Stiamo lustrando i mosaici",
+      "Carichiamo Palermo in 3D",
       "Apriamo le porte di Bal'harm",
       "Risvegliamo le campane del souk",
+      "Prepariamo la vista sui monumenti",
       "Accendiamo i fasci della Cattedrale",
       "Saliamo su Monte Pellegrino",
       "Diamo il sole alla Conca d'Oro",
@@ -80,8 +82,10 @@ window.Bh.i18n.COPY = {
     loading: "We are polishing the mosaics",
     loadingPhrases: [
       "Polishing the mosaics",
+      "Loading Palermo in 3D",
       "Throwing open Bal'harm's gates",
       "Waking the souk's bells",
+      "Framing the monuments",
       "Lighting the Cathedral's beams",
       "Climbing Mount Pellegrino",
       "Casting the sun on the Conca d'Oro",
