@@ -3,10 +3,12 @@
   const { useState, useEffect, useRef, useMemo, useCallback } = React;
   const { Cornice, Filters, Modal, GeoCard, TopBar, Star, BottomSheet } = window.Bh.ui;
   const isMobile = !!window.Bh.device?.isMobile;
-  // Short floor so the splash never just flashes by; the real gate is
-  // initialTilesLoaded (see the scene init effect below).
+  // Short floor so the splash never just flashes by; the real gate is the
+  // initial view being fully streamed in (onInitialLoad, see watchViewSettled
+  // in map/cesium/index.js). MAX_LOADER_MS is the safety net on slow
+  // connections: past it the splash lifts even if tiles are still arriving.
   const MIN_LOADER_MS = 1800;
-  const MAX_LOADER_MS = 18000;
+  const MAX_LOADER_MS = 25000;
   const { useAmbientAudio } = window.Bh.lib.audio;
   const { fmtYear } = window.Bh.lib.format;
   const { COPY } = window.Bh.i18n;
@@ -157,7 +159,7 @@
       });
       // Sync the initial audio state.
       sceneRef.current.setAudioEnabled?.(audioOn);
-      // Hide the splash when (a) the first batch of Google 3D tiles is on screen
+      // Hide the splash when (a) the initial view's Google 3D tiles are all loaded
       // AND (b) a minimum on-screen time has passed (so the splash never flashes
       // by). Safety net: never block forever — fall through after MAX_LOADER_MS.
       const startedAt = Date.now();
