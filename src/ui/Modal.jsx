@@ -84,7 +84,7 @@ window.Bh.ui = window.Bh.ui || {};
             ) : null}
             <div className="placeholder" style={{ display: item.img ? "none" : "grid" }}>
               <div>
-                <Star r1={48} r2={22} stroke="#c9a24a" />
+                <svg viewBox="-50 -50 100 100" width="96" height="96" aria-hidden="true"><Star r1={48} r2={22} stroke="#c9a24a" /></svg>
                 <span>{item[`title_${lang}`]}</span>
                 <div style={{marginTop:14, fontSize: 9}}>{t.placeholderLabel}</div>
               </div>
