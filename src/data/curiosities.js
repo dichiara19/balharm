@@ -58,7 +58,7 @@ window.Bh.data.CURIOSITIES = [
     title_en: "Teatro Massimo, third in Europe",
     body_it: "Il Teatro Massimo è il terzo teatro lirico più grande d'Europa, secondo solo all'Opéra di Parigi e alla Wiener Staatsoper.",
     body_en: "Teatro Massimo is Europe's third-largest opera house, behind only the Paris Opéra and Vienna's Staatsoper.",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1b/Teatro_Massimo_Palermo.jpg/800px-Teatro_Massimo_Palermo.jpg",
+    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Teatro_Massimo_Palermo.jpg/960px-Teatro_Massimo_Palermo.jpg",
     source: "Wikimedia Commons — Teatro Massimo" },
 
   { id: 8, cat: "arch", year: 1583, lat: 38.1121, lng: 13.3527,
@@ -66,7 +66,7 @@ window.Bh.data.CURIOSITIES = [
     title_en: "Monumental gates",
     body_it: "Porta Nuova e Porta Felice sono fra le porte cittadine più monumentali d'Europa.",
     body_en: "Porta Nuova and Porta Felice are among Europe's most monumental city gates.",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4f/Palermo-Porta-Nuova-bjs-2.jpg/800px-Palermo-Porta-Nuova-bjs-2.jpg",
+    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Palermo-Porta-Nuova-bjs-2.jpg/960px-Palermo-Porta-Nuova-bjs-2.jpg",
     source: "Wikimedia Commons — Porta Nuova" },
 
   { id: 9, cat: "hist", year: 1230, lat: 38.1113, lng: 13.3531,
@@ -289,7 +289,7 @@ window.Bh.data.CURIOSITIES = [
     title_en: "The Zisa and the Cuba",
     body_it: "Unici esempi in Europa di architettura islamica medievale fusa con lo stile normanno.",
     body_en: "The only European examples of medieval Islamic architecture blended with the Norman style.",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/65/Palermo-Zisa-bjs2007-02.jpg/800px-Palermo-Zisa-bjs2007-02.jpg",
+    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Palermo-Zisa-bjs2007-02.jpg/960px-Palermo-Zisa-bjs2007-02.jpg",
     source: "Wikimedia Commons — La Zisa" },
 
   { id: 37, cat: "art", year: 1710, lat: 38.1199, lng: 13.3651,
@@ -305,7 +305,7 @@ window.Bh.data.CURIOSITIES = [
     title_en: "The Martorana mosaics",
     body_it: "I mosaici bizantini di Santa Maria dell'Ammiraglio sono fra i più antichi e meglio conservati d'Europa.",
     body_en: "The Byzantine mosaics of Santa Maria dell'Ammiraglio are among Europe's oldest and best preserved.",
-    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/06/Martorana_RogerII.jpg/800px-Martorana_RogerII.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/f/fb/Martorana_RogerII.jpg",
     source: "Wikimedia Commons — Martorana" },
 
   { id: 39, cat: "nat", year: 1787, lat: 38.1661, lng: 13.3538, altitude: 600,
