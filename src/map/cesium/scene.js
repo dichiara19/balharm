@@ -181,6 +181,14 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     ssc.minimumPickingTerrainHeight = 0;
     ssc.minimumCollisionTerrainHeight = 0;
     ssc.minimumTrackBallHeight = 0;
+    // Inertia tuning: the 0.9 defaults make the camera keep drifting after a
+    // wheel-zoom or drag release, which reads as "lag" — the gesture is over
+    // but the view keeps moving while new tiles stream in. Lower values stop
+    // the camera crisply on release; 0.7–0.8 keeps a touch of glide without
+    // the overshoot.
+    ssc.inertiaZoom = 0.7;
+    ssc.inertiaTranslate = 0.8;
+    ssc.inertiaSpin = 0.8;
 
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
@@ -249,7 +257,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       maximumScreenSpaceError: isMobile ? 32 : 40,
       skipLevelOfDetail: true,
       baseScreenSpaceError: 1024,
-      skipScreenSpaceErrorFactor: 16,
+      // 24 (was 16): during camera movement the effective SSE is multiplied
+      // by this factor, so 40 × 24 = 960 — only very coarse ancestor tiles
+      // are shown while zooming/panning. Quality at rest is unchanged.
+      skipScreenSpaceErrorFactor: 24,
       skipLevels: 1,
       immediatelyLoadDesiredLevelOfDetail: false,
       loadSiblings: false,
@@ -257,6 +268,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       dynamicScreenSpaceErrorDensity: 0.00278,
       dynamicScreenSpaceErrorFactor: 4.0,
       dynamicScreenSpaceErrorHeightFalloff: 0.25,
+      // 0.4 s (default 0.2): after the camera stops, wait this long before
+      // loading tiles outside the foveal cone. Prevents a burst of edge-tile
+      // requests on every wheel notch during continuous zoom.
+      foveatedTimeDelay: 0.4,
       // Bigger desktop tile cache so panning back over already-visited streets
       // doesn't re-stream tiles (a major source of desktop pan stutter); mobile
       // stays small (less RAM available).

@@ -114,6 +114,10 @@ window.Bh.map = window.Bh.map || {};
       onInitialLoadCb && onInitialLoadCb();
     }
 
+    // True while the splash-time cache-warming pass is moving the camera —
+    // roof sampling must stay off (it would sample mid-preload altitudes).
+    let preloading = false;
+
     // Splash gate. Cesium's initialTilesLoaded fires when the first tiles are
     // ready — with the Google tileset that is still a coarse level, and finer
     // tiles keep streaming in after the splash has gone. So gate on
@@ -128,7 +132,7 @@ window.Bh.map = window.Bh.map || {};
         idleFrames = ts.tilesLoaded ? idleFrames + 1 : 0;
         if (idleFrames >= SETTLE_FRAMES) {
           scene.postRender.removeEventListener(onFrame);
-          fireInitialLoadOnce();
+          preloadZoomLevels(ts, fireInitialLoadOnce);
         }
       };
       ts.allTilesLoaded.addEventListener(function arm() {
@@ -137,10 +141,86 @@ window.Bh.map = window.Bh.map || {};
       });
     }
 
+    // Cache-warming pass: while the splash still covers the canvas, jump the
+    // camera through two intermediate zoom levels above the centre and wait
+    // for each level's tiles to stream in. The first user zooms then hit a
+    // warm cache instead of stalling on cold downloads. Bounded by timeouts
+    // so a slow network can't hold the splash hostage; on finish the camera
+    // returns to the exact initial view.
+    const PRELOAD_LEVELS = [
+      { height: 700, pitchDeg: -45 },
+      { height: 450, pitchDeg: -45 },
+    ];
+    const PRELOAD_STEP_TIMEOUT_MS = 2500;
+    const PRELOAD_TOTAL_MS = 6000;
+    function preloadZoomLevels(ts, onDone) {
+      const centre = sceneMod.CENTER;
+      const savedDest = viewer.camera.position.clone();
+      const savedOrient = {
+        heading: viewer.camera.heading,
+        pitch: viewer.camera.pitch,
+        roll: viewer.camera.roll,
+      };
+      const startedAt = Date.now();
+      let step = 0;
+      preloading = true;
+      function finish() {
+        preloading = false;
+        viewer.camera.setView({ destination: savedDest, orientation: savedOrient });
+        console.log("[Bh] preload done, splash can lift");
+        onDone();
+      }
+      function nextStep() {
+        if (step >= PRELOAD_LEVELS.length || Date.now() - startedAt > PRELOAD_TOTAL_MS) {
+          finish();
+          return;
+        }
+        const lv = PRELOAD_LEVELS[step++];
+        viewer.camera.setView({
+          destination: Cesium.Cartesian3.fromDegrees(centre.lng, centre.lat, lv.height),
+          orientation: { heading: 0, pitch: Cesium.Math.toRadians(lv.pitchDeg), roll: 0 },
+        });
+        const stepStart = Date.now();
+        const check = () => {
+          if (ts.tilesLoaded || Date.now() - stepStart > PRELOAD_STEP_TIMEOUT_MS) {
+            setTimeout(nextStep, 50);
+          } else {
+            setTimeout(check, 50);
+          }
+        };
+        check();
+      }
+      nextStep();
+    }
+
     sceneMod.loadBaseTileset(scene, duotoneShader).then((ts) => {
       baseTileset = ts;
       ts.allTilesLoaded.addEventListener(sampleRoofs);
       watchViewSettled(ts);
+
+      // Zoom-aware SSE: while the user is actively zooming (wheel / pinch),
+      // temporarily raise the screen-space error so Cesium requests fewer,
+      // coarser tiles — the gesture stays smooth even on a cold cache. When
+      // the camera settles, restore the base SSE and the correct tiles stream
+      // in quietly in the background. Ctrl/Shift+wheel (tilt/rotate) excluded.
+      const BASE_SSE = ts.maximumScreenSpaceError;
+      const ZOOM_SSE = Math.max(BASE_SSE * 2, 80);
+      let zoomSseTimer = null;
+      const raiseSse = () => {
+        ts.maximumScreenSpaceError = ZOOM_SSE;
+        clearTimeout(zoomSseTimer);
+      };
+      const restoreSse = () => {
+        clearTimeout(zoomSseTimer);
+        zoomSseTimer = setTimeout(() => { ts.maximumScreenSpaceError = BASE_SSE; }, 120);
+      };
+      scene.canvas.addEventListener("wheel", (e) => {
+        if (e.ctrlKey || e.shiftKey) return; // tilt/rotate, not zoom
+        raiseSse();
+      }, { passive: true });
+      const zoomHandler = new Cesium.ScreenSpaceEventHandler(scene.canvas);
+      zoomHandler.setInputAction(raiseSse, Cesium.ScreenSpaceEventType.PINCH_START);
+      viewer.camera.moveEnd.addEventListener(restoreSse);
 
       // OSM refinement disabled — the LANDMARKS table now carries
       // human-verified coords (from Google Maps URLs), so the async Overpass
@@ -160,7 +240,7 @@ window.Bh.map = window.Bh.map || {};
     // stalls the main thread; a camera move aborts it until the next rest.
     let sampling = false, cameraMoving = false, roofsLocked = false;
     function sampleRoofs() {
-      if (sampling || roofsLocked || cameraMoving || !baseTileset?.tilesLoaded) return;
+      if (preloading || sampling || roofsLocked || cameraMoving || !baseTileset?.tilesLoaded) return;
       sampling = true;
       (function chunk(i) {
         if (cameraMoving) { sampling = false; return; }
