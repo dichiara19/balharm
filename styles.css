@@ -53,29 +53,24 @@ body {
 }
 
 /* Imperfect organic black vignette — focuses Palermo, fades the rest
-   without fully blacking it out so peripheral elements stay readable. */
-#three-root::before,
-#three-root::after {
+   without fully blacking it out so peripheral elements stay readable.
+   Two elliptical gradients (50%×54% centred; 65%×68% at 48%/53%, ×0.7)
+   with their rims torn by feTurbulence + feDisplacementMap. Everything lives
+   inside one SVG *image* instead of CSS `filter: url(#…)` on the element:
+   the image is rasterised once per size and then sits over the WebGL canvas
+   as a static texture, whereas a CSS reference filter is an effect the
+   compositor keeps re-applying while the scene below redraws. The SVG has no
+   viewBox, so its user units are the box's CSS px — noise scale and
+   displacement stay the same at any viewport/aspect, as before.
+   No mix-blend-mode: multiply with black at alpha a gives C·(1−a), exactly
+   what a normal alpha blend gives, without forcing a backdrop read. */
+#three-root::before {
   content: "";
   position: absolute;
   inset: -8%;
   pointer-events: none;
   z-index: 6;
-}
-#three-root::before {
-  background:
-    radial-gradient(ellipse 50% 54% at 50% 50%, transparent 0%, transparent 42%,
-      rgba(0,0,0,0.30) 70%, rgba(0,0,0,0.55) 100%);
-  filter: url(#organic-edge);
-  mix-blend-mode: multiply;
-}
-#three-root::after {
-  background:
-    radial-gradient(ellipse 65% 68% at 48% 53%, transparent 0%, transparent 50%,
-      rgba(0,0,0,0.14) 78%, rgba(0,0,0,0.28) 100%);
-  filter: url(#organic-edge-2);
-  mix-blend-mode: multiply;
-  opacity: 0.7;
+  background: no-repeat 0 0 / 100% 100% url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='100%25' height='100%25'%3E%3Cdefs%3E%3Cfilter id='a' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.011' numOctaves='3' seed='7'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='110'/%3E%3C/filter%3E%3Cfilter id='b' x='-20%25' y='-20%25' width='140%25' height='140%25'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.018' numOctaves='2' seed='13'/%3E%3CfeDisplacementMap in='SourceGraphic' scale='70'/%3E%3C/filter%3E%3CradialGradient id='g' cx='.5' cy='.5' r='.5' gradientTransform='translate(0 -.04) scale(1 1.08)'%3E%3Cstop offset='.42' stop-opacity='0'/%3E%3Cstop offset='.7' stop-opacity='.3'/%3E%3Cstop offset='1' stop-opacity='.55'/%3E%3C/radialGradient%3E%3CradialGradient id='h' cx='.48' cy='.53' r='.65' gradientTransform='translate(0 -.0245) scale(1 1.0462)'%3E%3Cstop offset='.5' stop-opacity='0'/%3E%3Cstop offset='.78' stop-opacity='.14'/%3E%3Cstop offset='1' stop-opacity='.28'/%3E%3C/radialGradient%3E%3C/defs%3E%3Crect width='100%25' height='100%25' fill='url(%23g)' filter='url(%23a)'/%3E%3Crect width='100%25' height='100%25' fill='url(%23h)' filter='url(%23b)' opacity='.7'/%3E%3C/svg%3E");
 }
 /* Cesium stage fills #three-root */
 #three-root .cesium-stage,
@@ -704,8 +699,11 @@ body {
 /* === Pin label tooltip === */
 .pin-tooltip {
   position: absolute;
+  left: 0; top: 0;
   pointer-events: none;
   z-index: 17;
+  /* app.jsx prepends translate(x, y): moving it with transform instead of
+     left/top keeps cursor-following off the layout path. */
   transform: translate(-50%, -120%);
   background: rgba(11, 29, 58, 0.92);
   border: 1px solid var(--gold);
@@ -868,8 +866,8 @@ body {
   border-top: 1px solid var(--line);
   border-radius: 18px 18px 0 0;
   box-shadow: 0 -10px 40px rgba(0,0,0,0.45);
-  -webkit-backdrop-filter: blur(14px);
-          backdrop-filter: blur(14px);
+  /* No backdrop-filter: at 0.96–0.98 alpha the blur was invisible, yet it
+     re-blurred the live WebGL canvas under the full-width sheet every frame. */
   display: flex; flex-direction: column;
   overflow: hidden;
   will-change: transform;
@@ -981,6 +979,13 @@ html.is-mobile .hint {
 }
 .bh-drawer .geo-card {
   width: 100%;
+}
+/* Inside the near-opaque sheet the chips' / card's own blur only sees flat
+   navy — drop it so each one isn't a separate per-frame blur pass. */
+.bh-sheet .filter-chip,
+.bh-sheet .geo-card {
+  -webkit-backdrop-filter: none;
+          backdrop-filter: none;
 }
 .bh-drawer .aux-stack { display: none; }
 

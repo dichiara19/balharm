@@ -3,7 +3,9 @@
   const { useState, useEffect, useRef, useMemo, useCallback } = React;
   const { Cornice, Filters, Modal, GeoCard, TopBar, Star, BottomSheet } = window.Bh.ui;
   const isMobile = !!window.Bh.device?.isMobile;
-  const MIN_LOADER_MS = 7000;   // give pre-warming time to populate the tile cache
+  // Short floor so the splash never just flashes by; the real gate is
+  // initialTilesLoaded (see the scene init effect below).
+  const MIN_LOADER_MS = 1800;
   const MAX_LOADER_MS = 18000;
   const { useAmbientAudio } = window.Bh.lib.audio;
   const { fmtYear } = window.Bh.lib.format;
@@ -34,9 +36,10 @@
     const [activeId, setActiveId] = useState(null);
     const [modalId, setModalId] = useState(null);
     const [filterCats, setFilterCats] = useState([]);
-    const [hoverId, setHoverId] = useState(null);
+    // Hovered bell + cursor position as one state, so a hover update is one
+    // render. The scene only calls back on a real change (see index.js).
+    const [hover, setHover] = useState(null);
     const modalTimerRef = useRef(null);
-    const [hoverPos, setHoverPos] = useState({ x: 0, y: 0 });
     const [tour, setTour] = useState(null);
     const [shared, setShared] = useState(false);
     // Try to start the ambient audio as the splash appears, on both
@@ -69,7 +72,7 @@
     }, [items]);
 
     const modalItem = modalId ? items.find(c => c.id === modalId) : null;
-    const hoverItem = hoverId ? items.find(c => c.id === hoverId) : null;
+    const hoverItem = hover ? items.find(c => c.id === hover.id) : null;
 
     // Selection helper. opts.delayed=true postpones the modal so the bell can
     // finish swinging (and the click sound can play) before the curiosity card
@@ -147,10 +150,7 @@
       if (!threeHostRef.current || sceneRef.current) return;
       sceneRef.current = window.Bh.scene.buildScene(threeHostRef.current);
       sceneRef.current.onSelect((id) => select(id, { delayed: true }));
-      sceneRef.current.onHover((id, x, y) => {
-        setHoverId(id);
-        if (id) setHoverPos({ x, y });
-      });
+      sceneRef.current.onHover((id, x, y) => setHover(id != null ? { id, x, y } : null));
       sceneRef.current.onHeading?.((deg) => {
         const g = compassRef.current;
         if (g) g.setAttribute("transform", `translate(800,450) rotate(${-deg})`);
@@ -317,8 +317,9 @@
           </div>
         )}
 
-        {hoverId && hoverItem && !activeId && (
-          <div className="pin-tooltip show" style={{ left: hoverPos.x, top: hoverPos.y }}>
+        {hoverItem && !activeId && (
+          <div className="pin-tooltip show"
+               style={{ transform: `translate(${hover.x}px, ${hover.y}px) translate(-50%, -120%)` }}>
             <small>{fmtYear(hoverItem.year, lang)}</small>
             {hoverItem[`title_${lang}`]}
           </div>
