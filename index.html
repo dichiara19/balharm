@@ -31,15 +31,11 @@
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
 <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,500;0,600;1,400;1,500&family=Hanken+Grotesk:wght@300;400;500;600&family=JetBrains+Mono:wght@300;400&display=swap" rel="stylesheet">
 
-<link rel="stylesheet" href="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Widgets/widgets.css">
 <link rel="stylesheet" href="styles.css">
 
-<script>window.CESIUM_BASE_URL = "https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/";</script>
-<script src="https://cesium.com/downloads/cesiumjs/releases/1.124/Build/Cesium/Cesium.js"></script>
-
-<script src="https://unpkg.com/react@18.3.1/umd/react.production.min.js" integrity="sha384-DGyLxAyjq0f9SPpVevD6IgztCFlnMF6oW/XQGmfe+IsZ8TqEiDrcHkMLKI6fiB/Z" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/react-dom@18.3.1/umd/react-dom.production.min.js" integrity="sha384-gTGxhz21lVGYNMcdJOyq01Edg0jhn/c22nsx0kyqP0TxaV5WVdsSH1fSDUf5YJj1" crossorigin="anonymous"></script>
-<script src="https://unpkg.com/@babel/standalone@7.29.0/babel.min.js" integrity="sha384-m08KidiNqLdpJqLq95G/LEi8Qvjl/xUYll3QILypMoQ65QorJ9Lvtp2RXYGBFj1y" crossorigin="anonymous"></script>
+<!-- Cesium 1.124 (npm): vite.config.js lo copia in dist/cesium/ e inietta qui
+     widgets.css, CESIUM_BASE_URL e lo <script> classico Cesium.js (esposto come
+     globale `Cesium`, eseguito prima del bundle src/main.js). -->
 
 <!-- Local dev override: loads dev.local.js (gitignored) only on localhost,
      setting window.CESIUM_ION_TOKEN to the unrestricted dev token so Cesium
@@ -51,33 +47,12 @@
   }
 </script>
 
-<!-- Bal'harm: data, i18n, helpers, scene (pure JS, sync) -->
-<script src="src/data/categories.js"></script>
-<script src="src/data/geography.js"></script>
-<script src="src/data/curiosities.js"></script>
-<script src="src/i18n/copy.js"></script>
-<script src="src/lib/format.js"></script>
-<script src="src/lib/audio.js"></script>
-<script src="src/lib/device.js"></script>
-<script src="src/lib/analytics.js"></script>
-<script src="src/map/cesium/scene.js"></script>
-<script src="src/map/cesium/landmarks.js"></script>
-<script src="src/map/cesium/lights.js"></script>
-<script src="src/map/cesium/pins.js"></script>
-<script src="src/map/cesium/index.js"></script>
+<!-- Bal'harm: tutto il codice (dati, i18n, scena Cesium, UI React con JSX già
+     compilato) è un unico bundle Vite; React arriva da npm (src/globals.js). -->
+<script type="module" src="/src/main.js"></script>
 </head>
 <body>
 <div id="app"></div>
 
-<!-- Bal'harm: React UI (Babel-transpiled, executed after pure-JS scripts) -->
-<script type="text/babel" src="src/ui/Cornice.jsx"></script>
-<script type="text/babel" src="src/ui/BottomSheet.jsx"></script>
-<script type="text/babel" src="src/ui/Filters.jsx"></script>
-<!-- Timeline disattivata per ora — riattivare rimuovendo questo commento -->
-<!-- <script type="text/babel" src="src/ui/Timeline.jsx"></script> -->
-<script type="text/babel" src="src/ui/Modal.jsx"></script>
-<script type="text/babel" src="src/ui/GeoCard.jsx"></script>
-<script type="text/babel" src="src/ui/TopBar.jsx"></script>
-<script type="text/babel" src="src/app.jsx"></script>
 </body>
 </html>
