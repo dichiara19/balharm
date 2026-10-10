@@ -1,0 +1,18 @@
+{
+  "name": "Bal'harm · 50 curiosità di Palermo",
+  "short_name": "Bal'harm",
+  "description": "Mappa 3D di Palermo con 50 curiosità, tour guidato, IT/EN.",
+  "lang": "it",
+  "start_url": "/",
+  "scope": "/",
+  "display": "fullscreen",
+  "display_override": ["fullscreen", "standalone"],
+  "orientation": "any",
+  "background_color": "#0b1d3a",
+  "theme_color": "#0b1d3a",
+  "icons": [
+    { "src": "uploads/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
+    { "src": "uploads/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
+    { "src": "uploads/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" }
+  ]
+}
