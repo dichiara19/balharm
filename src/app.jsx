@@ -1,7 +1,7 @@
 // Bal'harm — root React app. Wires UI components, scene, and global state.
 (function () {
   const { useState, useEffect, useRef, useMemo, useCallback } = React;
-  const { Cornice, Filters, Modal, GeoCard, TopBar, Star, BottomSheet } = window.Bh.ui;
+  const { Cornice, Filters, Modal, GeoCard, TopBar, Star, BottomSheet, TourNav } = window.Bh.ui;
   const isMobile = !!window.Bh.device?.isMobile;
   // Short floor so the splash never just flashes by; the real gate is the
   // initial view being fully streamed in (onInitialLoad, see watchViewSettled
@@ -294,9 +294,11 @@
         )}
 
         {isMobile && (
-          <BottomSheet open={drawerOpen} onOpenChange={setDrawerOpen}
+          // Slides away while a curiosity sheet is up: otherwise the two
+          // sheets stacked and the drawer ghosted through the backdrop.
+          <BottomSheet open={drawerOpen && !modalItem} onOpenChange={setDrawerOpen}
                        snap={["peek", "full"]}
-                       peekHeight={88} fullHeight="58%"
+                       peekHeight={100} fullHeight={316}
                        initial="peek"
                        className="bh-drawer">
             <div className="drawer-content">
@@ -343,10 +345,11 @@
                        focusTrap={true}
                        closeOnSwipeDown={true}
                        onSnap={setModalSheetSnap}
-                       className="bh-modal-sheet">
+                       className="bh-modal-sheet"
+                       header={tourNav && <TourNav lang={lang} {...tourNav} onExit={exitTour} />}>
             <Modal item={modalItem} onClose={tour !== null ? exitTour : closeModal} lang={lang}
                    total={items.length} onShare={onShare} sharedFlash={shared}
-                   mobile={true} tourNav={tourNav} />
+                   mobile={true} inTour={!!tourNav} />
           </BottomSheet>
         )}
 

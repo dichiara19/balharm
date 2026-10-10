@@ -42,44 +42,72 @@ window.Bh.ui = window.Bh.ui || {};
     );
   }
 
-  function Modal({ item, onClose, lang, total, onShare, sharedFlash, mobile = false, tourNav = null }) {
+  // Mobile tour stepper. Rendered by app.jsx in the BottomSheet header slot,
+  // above the scrolling body, so it never scrolls away or bleeds past the
+  // sheet edges (it used to be a sticky child with negative margins).
+  function TourNav({ lang, index, total, onPrev, onNext, onExit }) {
+    const t = window.Bh.i18n.COPY[lang];
+    const pct = ((index + 1) / Math.max(1, total)) * 100;
+    return (
+      <div className="tour-nav" role="navigation" aria-label={t.tour}>
+        <button type="button" className="tour-nav-btn prev" onClick={onPrev} aria-label={t.tourPrev}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M14.5 6 8.5 12l6 6"/></svg>
+        </button>
+        <div className="tour-nav-mid">
+          <span className="tour-nav-count">
+            {String(index + 1).padStart(2, "0")}<i>/</i>{String(total).padStart(2, "0")}
+          </span>
+          <span className="tour-nav-track" aria-hidden="true">
+            <span className="tour-nav-fill" style={{ width: `${pct}%` }} />
+          </span>
+        </div>
+        <button type="button" className="tour-nav-exit" onClick={onExit}>{t.tourEnd}</button>
+        <button type="button" className="tour-nav-btn next" onClick={onNext} aria-label={t.tourNext}>
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M9.5 6l6 6-6 6"/></svg>
+        </button>
+      </div>
+    );
+  }
+
+  function Modal({ item, onClose, lang, total, onShare, sharedFlash, mobile = false, inTour = false }) {
     const t = window.Bh.i18n.COPY[lang];
     const { Star } = window.Bh.ui;
     const { fmtYear } = window.Bh.lib.format;
     const cat = window.Bh.data.CATEGORIES.find(c => c.id === item.cat);
-    const inTour = mobile && !!tourNav;
     // On mobile the modal is hosted inside a BottomSheet (no scrim wrapper).
     const Wrapper = ({ children }) => mobile
       ? <div className={`modal modal-mobile${inTour ? " in-tour" : ""}`}>{children}</div>
       : <div className="scrim" onClick={onClose}>
           <div className="modal" onClick={(e) => e.stopPropagation()}>{children}</div>
         </div>;
-    const pct = inTour ? ((tourNav.index + 1) / Math.max(1, tourNav.total)) * 100 : 0;
+    // Mobile puts title + theme above the photo: at the peek snap the sheet
+    // shows what the curiosity is while the camera flies to it.
+    const head = (
+      <>
+        {!inTour && <div className="num">{String(item.id).padStart(2,"0")} / {String(total).padStart(2,"0")}</div>}
+        <h2>{item[`title_${lang}`]}</h2>
+        <div className="meta">
+          <span className="cat-swatch" style={{background: cat.color}}/>
+          <span>{cat[lang]}</span>
+          <span className="dot"/>
+          <span>{fmtYear(item.year, lang)}</span>
+          {!mobile && <>
+            <span className="dot"/>
+            <span>{item.lat.toFixed(4)}°N · {item.lng.toFixed(4)}°E</span>
+          </>}
+        </div>
+      </>
+    );
     return (
       <Wrapper>
-          {inTour && (
-            <div className="tour-nav" role="navigation" aria-label={t.tour}>
-              <button type="button" className="tour-nav-btn prev"
-                      onClick={tourNav.onPrev} aria-label={t.tourPrev}>‹</button>
-              <div className="tour-nav-mid">
-                <span className="tour-nav-count">
-                  {String(tourNav.index + 1).padStart(2, "0")}<i>/</i>{String(tourNav.total).padStart(2, "0")}
-                </span>
-                <span className="tour-nav-track" aria-hidden="true">
-                  <span className="tour-nav-fill" style={{ width: `${pct}%` }} />
-                </span>
-                <button type="button" className="tour-nav-exit" onClick={onClose}>{t.tourEnd}</button>
-              </div>
-              <button type="button" className="tour-nav-btn next"
-                      onClick={tourNav.onNext} aria-label={t.tourNext}>›</button>
-            </div>
-          )}
           <button className="close" onClick={onClose} aria-label={t.closeAria}>×</button>
-          <div className="img">
+          {mobile && <div className="m-head">{head}</div>}
+          <div className={`img${item.img ? "" : " no-img"}`}>
             {item.img ? (
               <img src={item.img} alt="" loading="lazy" onError={(e) => {
                 e.currentTarget.style.display = "none";
                 e.currentTarget.nextElementSibling.style.display = "grid";
+                e.currentTarget.parentElement.classList.add("no-img");
               }}/>
             ) : null}
             <div className="placeholder" style={{ display: item.img ? "none" : "grid" }}>
@@ -93,16 +121,7 @@ window.Bh.ui = window.Bh.ui || {};
             <MiniMap item={item} />
           </div>
           <div className="body">
-            <div className="num">{String(item.id).padStart(2,"0")} / {String(total).padStart(2,"0")}</div>
-            <h2>{item[`title_${lang}`]}</h2>
-            <div className="meta">
-              <span className="cat-swatch" style={{background: cat.color}}/>
-              <span>{cat[lang]}</span>
-              <span className="dot"/>
-              <span>{fmtYear(item.year, lang)}</span>
-              <span className="dot"/>
-              <span>{item.lat.toFixed(4)}°N · {item.lng.toFixed(4)}°E</span>
-            </div>
+            {!mobile && head}
             <p>{item[`body_${lang}`]}</p>
             <div className="actions">
               <button className="pill" onClick={() => onShare(item)}>
@@ -124,5 +143,6 @@ window.Bh.ui = window.Bh.ui || {};
   const MemoModal = React.memo(Modal);
 
   window.Bh.ui.MiniMap = MiniMap;
+  window.Bh.ui.TourNav = TourNav;
   window.Bh.ui.Modal = MemoModal;
 })();

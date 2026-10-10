@@ -68,28 +68,28 @@ window.Bh.ui = window.Bh.ui || {};
         <div className="geo-title">{t.nearby}</div>
         {status === "idle" && (
           <>
-            <div>{t.locationOff}</div>
+            <div className="geo-msg">{t.locationOff}</div>
             <button onClick={locate}>{t.locate}</button>
           </>
         )}
-        {status === "locating" && <div>{t.locating}</div>}
+        {status === "locating" && <div className="geo-msg">{t.locating}</div>}
         {status === "denied" && (
           <>
-            <div>{t.locationDenied}</div>
+            <div className="geo-msg">{t.locationDenied}</div>
             <button onClick={locate}>{t.locate}</button>
           </>
         )}
         {status === "far" && (
           <>
-            <div>{t.notNearby}</div>
+            <div className="geo-msg">{t.notNearby}</div>
             <button onClick={locate}>{t.locate}</button>
           </>
         )}
         {status === "ok" && nearest && (
-          <div onClick={() => onSelect(nearest.c.id)} style={{cursor: "pointer"}}>
-            <div className="geo-place">{nearest.c[`title_${lang}`]}</div>
-            <div className="geo-distance">{t.distance.replace("{d}", fmtDist(nearest.d))}</div>
-          </div>
+          <button type="button" className="geo-hit" onClick={() => onSelect(nearest.c.id)}>
+            <span className="geo-place">{nearest.c[`title_${lang}`]}</span>
+            <span className="geo-distance">{t.distance.replace("{d}", fmtDist(nearest.d))}</span>
+          </button>
         )}
       </div>
     );

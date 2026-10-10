@@ -19,6 +19,19 @@ window.Bh.ui = window.Bh.ui || {};
     return parseFloat(value) || 0;
   }
 
+  // env(safe-area-inset-bottom) in px (iOS home indicator), read once: the
+  // peek height is content height, so the indicator must be added on top.
+  let safeBottomPx = null;
+  function safeBottom() {
+    if (safeBottomPx !== null) return safeBottomPx;
+    const probe = document.createElement("div");
+    probe.style.cssText = "position:fixed;visibility:hidden;padding-bottom:env(safe-area-inset-bottom)";
+    document.body.appendChild(probe);
+    safeBottomPx = parseFloat(getComputedStyle(probe).paddingBottom) || 0;
+    probe.remove();
+    return safeBottomPx;
+  }
+
   function BottomSheet({
     open = true,
     onOpenChange,
@@ -31,6 +44,7 @@ window.Bh.ui = window.Bh.ui || {};
     closeOnSwipeDown = false,
     onSnap,
     className = "",
+    header = null,
     children,
   }) {
     const sheetRef  = useRef(null);
@@ -45,8 +59,8 @@ window.Bh.ui = window.Bh.ui || {};
     // The sheet itself is positioned bottom: 0 with height = fullHeightPx,
     // so translate=0 means "fully extended", positive translate hides it.
     const fullPx = toPx(fullHeight);
-    const peekPx = toPx(peekHeight);
-    const closedPx = fullPx + 40; // off-screen
+    const peekPx = toPx(peekHeight) + (typeof peekHeight === "number" ? safeBottom() : 0);
+    const closedPx = fullPx + 80; // off-screen, shadow included
     const stateY = useCallback((state) => {
       if (state === "full") return 0;
       if (state === "peek") return Math.max(0, fullPx - peekPx);
@@ -167,7 +181,7 @@ window.Bh.ui = window.Bh.ui || {};
       <>
         {backdrop && open && (
           <div className="bh-sheet-backdrop"
-               style={{ opacity: dragging ? Math.max(0, 1 - translateY / fullPx) * 0.7 : (snapState === "full" ? 0.7 : 0.45) }}
+               style={{ opacity: dragging ? Math.max(0, 1 - translateY / fullPx) * 0.7 : (snapState === "full" ? 0.7 : 0.2) }}
                onClick={() => onOpenChange && onOpenChange(false)} />
         )}
         <div ref={sheetRef}
@@ -182,6 +196,7 @@ window.Bh.ui = window.Bh.ui || {};
           <div ref={handleRef} className="bh-sheet-handle" onClick={cycleSnap}>
             <span className="bh-sheet-grabber"/>
           </div>
+          {header && <div className="bh-sheet-header">{header}</div>}
           <div className="bh-sheet-body">{children}</div>
         </div>
       </>
