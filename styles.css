@@ -873,7 +873,11 @@ body {
   will-change: transform;
   touch-action: pan-y;
 }
-.bh-sheet.bh-modal-sheet { z-index: 50; }
+/* Opaque: the filters drawer sits right below and would show through. */
+.bh-sheet.bh-modal-sheet {
+  z-index: 50;
+  background: linear-gradient(180deg, #0b1d3a 0%, #06112a 100%);
+}
 .bh-sheet-handle {
   flex: 0 0 auto;
   height: 28px;
@@ -1021,8 +1025,12 @@ html.is-mobile .hint {
   height: 140px;
   left: auto; bottom: auto;
 }
+/* Backed by a dark scrim: the transparent × was unreadable over the photo. */
 .bh-modal-sheet .modal-mobile .close {
-  top: -2px; right: 0;
+  top: 10px; right: 10px;
+  background: rgba(6, 17, 42, 0.72);
+  border-color: rgba(231, 200, 121, 0.45);
+  border-radius: 50%;
 }
 
 /* === Mobile guided tour — navigation docked inside the modal sheet ===
