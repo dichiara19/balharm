@@ -10,7 +10,7 @@ window.Bh.data.CURIOSITIES = [
     title_en: "A thousand architectures, one city",
     body_it: "Palermo è l'unica città al mondo dove quasi ogni stile architettonico è presente. È l'unica europea dove si trovano edifici in stile cinese, e l'unica al mondo dove stili come l'arabo e il normanno si fondono.",
     body_en: "Palermo is the only city on Earth where nearly every architectural style coexists. It is the only European city with a Chinese-style building, and the only one anywhere where Arab and Norman styles fuse.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3e/Palermo_0613_2013.jpg/960px-Palermo_0613_2013.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3e/Palermo_0613_2013.jpg/960px-Palermo_0613_2013.jpg",
     source: "Wikimedia Commons — Quattro Canti · Bengt Nyman (CC BY 2.0)" },
 
   { id: 2, cat: "arch", year: 1185, lat: 38.1143, lng: 13.3559,
@@ -18,7 +18,7 @@ window.Bh.data.CURIOSITIES = [
     title_en: "The Cathedral of nine styles",
     body_it: "La Cattedrale di Palermo riunisce ben nove stili architettonici diversi: bizantino, romanico, normanno, islamico, gotico, rinascimentale, barocco, neoclassico, catalano.",
     body_en: "Palermo Cathedral fuses nine distinct architectural styles: Byzantine, Romanesque, Norman, Islamic, Gothic, Renaissance, Baroque, Neoclassical and Catalan.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/0561_-_Palermo_-_Cattedrale_-_Foto_Giovanni_Dall%27Orto_28-Sept-2006.jpg/960px-0561_-_Palermo_-_Cattedrale_-_Foto_Giovanni_Dall%27Orto_28-Sept-2006.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/0561_-_Palermo_-_Cattedrale_-_Foto_Giovanni_Dall%27Orto_28-Sept-2006.jpg/960px-0561_-_Palermo_-_Cattedrale_-_Foto_Giovanni_Dall%27Orto_28-Sept-2006.jpg",
     source: "Wikimedia Commons — Cattedrale di Palermo · Giovanni Dall'Orto (attribuzione)" },
 
   { id: 3, cat: "hist", year: 1100, lat: 38.1162, lng: 13.3608,
@@ -27,7 +27,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Secondo i registri UNESCO, Palermo ha il più esteso centro storico d'Europa, in concorrenza con Lisbona.",
     body_en: "Per UNESCO records, Palermo's historic centre is the largest in Europe, vying with Lisbon's.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ea/Vista_Palermo_dal_Palazzo_dei_Normanni5.jpg/960px-Vista_Palermo_dal_Palazzo_dei_Normanni5.jpg",
-    source: "Wikimedia Commons — Palermo historic centre (panorama from Palazzo dei Normanni)" },
+    source: "Wikimedia Commons — Palermo historic centre (panorama from Palazzo dei Normanni) · Archipenzolo (CC BY-SA 3.0)" },
 
   { id: 4, cat: "hist", year: 1109, lat: 38.1213, lng: 13.3705,
     title_it: "La lettera di Adelasia",
@@ -35,7 +35,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "A Palermo si conserva il più antico documento cartaceo d'Europa: la lettera bilingue (greco e arabo) di Adelasia degli Aleramici, moglie di Ruggero I.",
     body_en: "Palermo holds Europe's oldest paper document: the bilingual (Greek/Arabic) letter of Adelasia of the Aleramici, wife of Roger I.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/R%C3%A9pudiation_d%27Ad%C3%A9la%C3%AFde_de_Montferrat_-_Fran%C3%A7ais_22495.jpg/960px-R%C3%A9pudiation_d%27Ad%C3%A9la%C3%AFde_de_Montferrat_-_Fran%C3%A7ais_22495.jpg",
-    source: "Wikimedia Commons — Adelasia del Vasto (Roman de Fauvel miniature)" },
+    source: "Wikimedia Commons — Adelasia del Vasto (Roman de Fauvel miniature) · Maestro del Roman de Fauvel (pubblico dominio)" },
 
   { id: 5, cat: "hist", year: -2400, lat: 38.1209, lng: 13.3608,
     title_it: "La Pietra di Palermo",
@@ -43,7 +43,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Conservata al Museo Salinas, è uno dei più antichi documenti della storia faraonica, secondo solo alla Stele di Rosetta per importanza epigrafica.",
     body_en: "Held at the Salinas Museum, one of the oldest records of Pharaonic history — second only to the Rosetta Stone in epigraphic weight.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8b/240911_CvZ-Palermo-stone.jpg/960px-240911_CvZ-Palermo-stone.jpg",
-    source: "Wikimedia Commons — Palermo Stone (Pietra di Palermo)" },
+    source: "Wikimedia Commons — Palermo Stone (Pietra di Palermo) · CvZ (CC BY-SA 4.0)" },
 
   { id: 6, cat: "art", year: -600, lat: 38.1210, lng: 13.3609,
     title_it: "La collezione etrusca Bonci–Casuccini",
@@ -51,23 +51,23 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Al Museo Salinas si conserva una delle più grandi collezioni di arte etrusca al mondo, proveniente da Chiusi.",
     body_en: "The Salinas Museum holds one of the world's largest Etruscan art collections, brought from Chiusi.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/ed/Etruscan_urn_from_the_Pietro_Bonci_Casuccini_collection_in_the_Antonino_Salinas_Regional_Archaeological_Museum%2C_Palermo.jpg/960px-Etruscan_urn_from_the_Pietro_Bonci_Casuccini_collection_in_the_Antonino_Salinas_Regional_Archaeological_Museum%2C_Palermo.jpg",
-    source: "Wikimedia Commons — Etruscan urn, Bonci Casuccini collection, Museo Salinas, Palermo" },
+    source: "Wikimedia Commons — Etruscan urn, Bonci Casuccini collection, Museo Salinas, Palermo · Gavingaebe (CC0)" },
 
   { id: 7, cat: "arch", year: 1897, lat: 38.1202, lng: 13.3572,
     title_it: "Teatro Massimo, terzo d'Europa",
     title_en: "Teatro Massimo, third in Europe",
     body_it: "Il Teatro Massimo è il terzo teatro lirico più grande d'Europa, secondo solo all'Opéra di Parigi e alla Wiener Staatsoper.",
     body_en: "Teatro Massimo is Europe's third-largest opera house, behind only the Paris Opéra and Vienna's Staatsoper.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/3c/Teatro_Massimo_Palermo.jpg/960px-Teatro_Massimo_Palermo.jpg",
-    source: "Wikimedia Commons — Teatro Massimo" },
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/3c/Teatro_Massimo_Palermo.jpg/960px-Teatro_Massimo_Palermo.jpg",
+    source: "Wikimedia Commons — Teatro Massimo · Archipenzolo (CC BY-SA 3.0)" },
 
   { id: 8, cat: "arch", year: 1583, lat: 38.1121, lng: 13.3527,
     title_it: "Le porte monumentali",
     title_en: "Monumental gates",
     body_it: "Porta Nuova e Porta Felice sono fra le porte cittadine più monumentali d'Europa.",
     body_en: "Porta Nuova and Porta Felice are among Europe's most monumental city gates.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f7/Palermo-Porta-Nuova-bjs-2.jpg/960px-Palermo-Porta-Nuova-bjs-2.jpg",
-    source: "Wikimedia Commons — Porta Nuova" },
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f7/Palermo-Porta-Nuova-bjs-2.jpg/960px-Palermo-Porta-Nuova-bjs-2.jpg",
+    source: "Wikimedia Commons — Porta Nuova · Bjs (CC0)" },
 
   { id: 9, cat: "hist", year: 1230, lat: 38.1113, lng: 13.3531,
     title_it: "La nascita dell'italiano",
@@ -75,14 +75,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "La lingua italiana nasce a Palermo, alla Scuola Siciliana, alla corte di Federico II — generata da traduzioni fiorentine dei testi della Scuola Poetica Siciliana.",
     body_en: "Italian was born in Palermo, at the Sicilian School in the court of Frederick II — generated from Florentine translations of Sicilian-school texts.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/92/Frederick_II_Art_Hunting_Vat_Heid-1.jpg/960px-Frederick_II_Art_Hunting_Vat_Heid-1.jpg",
-    source: "Wikimedia Commons — Frederick II enthroned, frontispiece of De arte venandi cum avibus" },
+    source: "Wikimedia Commons — Frederick II enthroned, frontispiece of De arte venandi cum avibus · Ray Oaks (CC BY-SA 4.0)" },
 
   { id: 10, cat: "nat", year: 1789, lat: 38.1112, lng: 13.3741,
     title_it: "L'Orto Botanico",
     title_en: "The Botanical Garden",
     body_it: "L'Orto Botanico di Palermo è tra i più estesi d'Europa.",
     body_en: "Palermo's Botanical Garden is among Europe's largest.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/fa/Le_Jardin_botanique_de_Palerme_%287042395779%29.jpg/960px-Le_Jardin_botanique_de_Palerme_%287042395779%29.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/fa/Le_Jardin_botanique_de_Palerme_%287042395779%29.jpg/960px-Le_Jardin_botanique_de_Palerme_%287042395779%29.jpg",
     source: "Wikimedia Commons — Orto Botanico, Gymnasium · Jean-Pierre Dalbéra (CC BY 2.0)" },
 
   { id: 11, cat: "nat", year: 1905, lat: 38.1124, lng: 13.3551,
@@ -91,14 +91,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il palmeto di Villa Bonanno è tra i più estesi d'Europa.",
     body_en: "Villa Bonanno's palm grove is among the largest in Europe.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0a/Palermo-Villa-Bonanno-bjs-1.jpg/960px-Palermo-Villa-Bonanno-bjs-1.jpg",
-    source: "Wikimedia Commons — Palmeto di Villa Bonanno, Palermo" },
+    source: "Wikimedia Commons — Palmeto di Villa Bonanno, Palermo · Bjs (CC0)" },
 
   { id: 12, cat: "nat", year: 1845, lat: 38.1113, lng: 13.3742,
     title_it: "Il Ficus più grande del mondo",
     title_en: "The world's largest tree",
     body_it: "Il Ficus macrophylla dell'Orto Botanico è considerato l'albero più grande del mondo per estensione di chioma.",
     body_en: "The Ficus macrophylla in the Botanical Garden is considered the world's largest tree by canopy spread.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/f/f4/Ficus_macrophylla_%28Palermo%29.JPG/960px-Ficus_macrophylla_%28Palermo%29.JPG",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f4/Ficus_macrophylla_%28Palermo%29.JPG/960px-Ficus_macrophylla_%28Palermo%29.JPG",
     source: "Wikimedia Commons — Ficus macrophylla, Orto Botanico · Giuseppe ME (CC BY-SA 4.0)" },
 
   { id: 13, cat: "hist", year: 1130, lat: 38.1113, lng: 13.3536,
@@ -107,7 +107,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il Parlamento Siciliano è il più antico al mondo insieme a quelli di Islanda e Faroe; Ruggero II ne convocò la prima assemblea nel 1130.",
     body_en: "Sicily's parliament is the world's oldest alongside those of Iceland and the Faroes; Roger II convened its first assembly in 1130.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/87/Sala_Ercole.JPG/960px-Sala_Ercole.JPG",
-    source: "Wikimedia Commons — Sala d'Ercole, Palazzo dei Normanni (Sicilian Regional Assembly)" },
+    source: "Wikimedia Commons — Sala d'Ercole, Palazzo dei Normanni (Sicilian Regional Assembly) · Giuseppe ME (CC BY-SA 4.0)" },
 
   { id: 14, cat: "arch", year: 1874, lat: 38.1252, lng: 13.3568,
     title_it: "Due teatri d'opera",
@@ -115,14 +115,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Palermo è stata la prima città al mondo ad avere due teatri d'opera.",
     body_en: "Palermo was the first city on Earth with two opera houses.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Palermo-Politeama-bjs-1_edit.jpg/960px-Palermo-Politeama-bjs-1_edit.jpg",
-    source: "Wikimedia Commons — Teatro Politeama Garibaldi, Palermo" },
+    source: "Wikimedia Commons — Teatro Politeama Garibaldi, Palermo · Bjs, MrPanyGoff (CC0)" },
 
   { id: 15, cat: "arch", year: 1799, lat: 38.1667313, lng: 13.3303277,
     title_it: "La Palazzina Cinese",
     title_en: "The Chinese Pavilion",
     body_it: "Unico edificio in Europa in stile cinese.",
     body_en: "The only building in Europe built in Chinese style.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/3/31/Palazzina_cinese_0001.JPG/960px-Palazzina_cinese_0001.JPG",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/31/Palazzina_cinese_0001.JPG/960px-Palazzina_cinese_0001.JPG",
     source: "Wikimedia Commons — Palazzina Cinese · tato grasso (CC BY-SA 3.0)" },
 
   { id: 16, cat: "arch", year: 1100, lat: 38.1082, lng: 13.3247,
@@ -131,14 +131,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "I qanat sono unici in Europa: si trovano altrove solo in Iran e Siria. Alcuni a Palermo sono ancora attivi — il più antico sistema idrico in funzione del continente.",
     body_en: "The qanats are unique in Europe — found otherwise only in Iran and Syria. Some still flow, making this Europe's oldest active water system.",
     img: "https://upload.wikimedia.org/wikipedia/commons/2/27/Qanat_di_Palermo.jpg",
-    source: "Wikimedia Commons — Qanat di Palermo" },
+    source: "Wikimedia Commons — Qanat di Palermo · Archipenzolo (CC BY-SA 3.0)" },
 
   { id: 17, cat: "art", year: 1140, lat: 38.1109, lng: 13.3535,
     title_it: "Il soffitto della Cappella Palatina",
     title_en: "The Palatine Chapel ceiling",
     body_it: "Il soffitto ligneo della Cappella Palatina è considerato il più grande monumento di arte islamica esistente sul pianeta.",
     body_en: "The wooden ceiling of the Palatine Chapel is regarded as the greatest monument of Islamic art on the planet.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/9/90/Cappella_Palatina_2014.jpg/960px-Cappella_Palatina_2014.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Cappella_Palatina_2014.jpg/960px-Cappella_Palatina_2014.jpg",
     source: "Wikimedia Commons — Cappella Palatina · Liilia Moroz (CC BY-SA 4.0)" },
 
   { id: 18, cat: "art", year: 1380, lat: 38.1176, lng: 13.3700,
@@ -147,7 +147,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il soffitto dell'Aula Magna di Palazzo Chiaramonte-Steri è considerato in Europa il più alto risultato pittorico su legno medievale.",
     body_en: "The Aula Magna ceiling at Palazzo Chiaramonte-Steri is Europe's highest pictorial achievement on medieval wood.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Frammento_di_soffitto_da_Palazzo_Chiaramonte-Steri_a_Palermo%2C_1377-80_-FG.jpg/960px-Frammento_di_soffitto_da_Palazzo_Chiaramonte-Steri_a_Palermo%2C_1377-80_-FG.jpg",
-    source: "Wikimedia Commons — Soffitto della Sala Magna, Palazzo Chiaramonte-Steri" },
+    source: "Wikimedia Commons — Soffitto della Sala Magna, Palazzo Chiaramonte-Steri · Fabrizio Garrisi (CC BY-SA 4.0)" },
 
   { id: 19, cat: "art", year: 1750, lat: 38.1147, lng: 13.3654,
     title_it: "Sala degli Specchi, Palazzo Gangi",
@@ -155,7 +155,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "La Sala degli Specchi di Palazzo Valguarnera-Gangi è la massima espressione del rococò europeo.",
     body_en: "The Hall of Mirrors at Palazzo Valguarnera-Gangi is Europe's pinnacle of Baroque-rocaille art.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Palazzo_Gangi_%28Palermo%29_14_07_2024_01.jpg/960px-Palazzo_Gangi_%28Palermo%29_14_07_2024_01.jpg",
-    source: "Wikimedia Commons — Palazzo Valguarnera-Gangi" },
+    source: "Wikimedia Commons — Palazzo Valguarnera-Gangi · Effems (CC0)" },
 
   { id: 20, cat: "art", year: 1820, lat: 38.1190, lng: 13.3628,
     title_it: "Il lampadario di Palazzo Pietratagliata",
@@ -163,7 +163,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il lampadario di Murano nella sala da ballo è il più grande d'Italia.",
     body_en: "The Murano chandelier in the ballroom is the largest in the Italian state.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e5/Palazzu_Alliata_di_Pietratagliata_ex_Termini.jpg/960px-Palazzu_Alliata_di_Pietratagliata_ex_Termini.jpg",
-    source: "Wikimedia Commons — Palazzo Alliata di Pietratagliata" },
+    source: "Wikimedia Commons — Palazzo Alliata di Pietratagliata · CarlesVA (CC BY-SA 3.0)" },
 
   { id: 21, cat: "nat", year: 1778, lat: 38.1135, lng: 13.3756,
     title_it: "Villa Giulia, primo parco urbano",
@@ -171,7 +171,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Villa Giulia è il più antico parco urbano al mondo aperto anche al popolo.",
     body_en: "Villa Giulia is the oldest urban park in the world also open to commoners.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e4/Villa_Giulia_piazzale_centrale.jpg/960px-Villa_Giulia_piazzale_centrale.jpg",
-    source: "Wikimedia Commons — Villa Giulia, Palermo" },
+    source: "Wikimedia Commons — Villa Giulia, Palermo · Stendhal55 (CC BY-SA 4.0)" },
 
   { id: 22, cat: "arch", year: 1140, lat: 38.0923, lng: 13.3872,
     title_it: "Il Castello di Maredolce",
@@ -179,7 +179,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "L'architettura di Maredolce è unica in Europa e si ritrova solo nel Maghreb.",
     body_en: "Maredolce's architecture is unique in Europe; its parallels lie in the Maghreb.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/63/Castello_di_Maredolce_01.jpg/960px-Castello_di_Maredolce_01.jpg",
-    source: "Wikimedia Commons — Castello di Maredolce (La Favara), Palermo" },
+    source: "Wikimedia Commons — Castello di Maredolce (La Favara), Palermo · Davide Mauro (CC BY-SA 4.0)" },
 
   { id: 23, cat: "hist", year: -500, lat: 38.1100, lng: 13.3505,
     title_it: "La Necropoli Punica",
@@ -187,14 +187,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "La Necropoli Punica di Palermo è la più estesa del mondo punico.",
     body_en: "Palermo's Punic Necropolis is the largest in the entire Punic world.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Necropoli_punica_di_Palermo_01.jpg/960px-Necropoli_punica_di_Palermo_01.jpg",
-    source: "Wikimedia Commons — Necropoli punica di Palermo" },
+    source: "Wikimedia Commons — Necropoli punica di Palermo · Davide Mauro (CC BY-SA 4.0)" },
 
   { id: 24, cat: "art", year: 1554, lat: 38.1155, lng: 13.3621,
     title_it: "La Fontana Pretoria",
     title_en: "The Pretoria Fountain",
     body_it: "La Fontana Pretoria è considerata un capolavoro del Rinascimento europeo.",
     body_en: "The Pretoria Fountain is considered a masterpiece of European Renaissance.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/2/2b/Piazza_e_fontana_Pretoria_Palermo.jpg/960px-Piazza_e_fontana_Pretoria_Palermo.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2b/Piazza_e_fontana_Pretoria_Palermo.jpg/960px-Piazza_e_fontana_Pretoria_Palermo.jpg",
     source: "Wikimedia Commons — Fontana Pretoria · Wolfgang Moroder (CC BY-SA 3.0)" },
 
   { id: 25, cat: "art", year: -10000, lat: 38.2042, lng: 13.3486,
@@ -203,7 +203,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "I graffiti delle Grotte dell'Addaura sono considerati un unicum nell'arte rupestre preistorica.",
     body_en: "The Addaura cave engravings are considered a one-of-a-kind in prehistoric rock art.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Personaggio_del_graffito_dell%27Addaura.jpg/960px-Personaggio_del_graffito_dell%27Addaura.jpg",
-    source: "Wikimedia Commons — Graffito dell'Addaura (figure)" },
+    source: "Wikimedia Commons — Graffito dell'Addaura (figure) · Giuseppe Bolzoni (CC BY-SA 4.0)" },
 
   { id: 26, cat: "art", year: 1446, lat: 38.1166, lng: 13.3712,
     title_it: "Il Trionfo della Morte",
@@ -211,7 +211,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il Trionfo della Morte di Palazzo Abatellis ispirò Picasso per Guernica.",
     body_en: "The Triumph of Death at Palazzo Abatellis inspired Picasso's Guernica.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f9/Trionfo_della_morte%2C_gi%C3%A0_a_palazzo_sclafani%2C_galleria_regionale_di_Palazzo_Abbatellis%2C_palermo_%281446%29_%2C_affresco_staccato.jpg/960px-Trionfo_della_morte%2C_gi%C3%A0_a_palazzo_sclafani%2C_galleria_regionale_di_Palazzo_Abbatellis%2C_palermo_%281446%29_%2C_affresco_staccato.jpg",
-    source: "Wikimedia Commons — Trionfo della Morte (Palazzo Abatellis, Palermo)" },
+    source: "Wikimedia Commons — Trionfo della Morte (Palazzo Abatellis, Palermo) · Maestro del Trionfo della Morte (pubblico dominio)" },
 
   { id: 27, cat: "art", year: 1510, lat: 38.1167, lng: 13.3714,
     title_it: "Il trittico di Mabuse",
@@ -219,7 +219,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il trittico di Mabuse a Palazzo Abatellis è uno dei massimi esempi di arte fiamminga al mondo.",
     body_en: "Mabuse's triptych at Palazzo Abatellis is one of the world's greatest examples of Flemish art.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5d/Jan_Gossaert._Triptiek_van_Malvagna%2C_GD001114.jpg/960px-Jan_Gossaert._Triptiek_van_Malvagna%2C_GD001114.jpg",
-    source: "Wikimedia Commons — Malvagna Triptych (Jan Gossaert)" },
+    source: "Wikimedia Commons — Malvagna Triptych (Jan Gossaert) · Jan Gossaert (pubblico dominio)" },
 
   { id: 28, cat: "art", year: 1700, lat: 38.1208, lng: 13.3631,
     title_it: "Giacomo Serpotta",
@@ -227,7 +227,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Giacomo Serpotta è considerato il più grande stuccatore di tutti i tempi.",
     body_en: "Giacomo Serpotta is considered the greatest stucco artist of all time.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a9/Giacomo_Serpotta%2C_Charitas%2C_Oratorio_del_Rosario_di_San_Domenico_a_Palermo%2C_1714-24_-FG.jpg/960px-Giacomo_Serpotta%2C_Charitas%2C_Oratorio_del_Rosario_di_San_Domenico_a_Palermo%2C_1714-24_-FG.jpg",
-    source: "Wikimedia Commons — Giacomo Serpotta, Charitas (Oratorio del Rosario di San Domenico, Palermo)" },
+    source: "Wikimedia Commons — Giacomo Serpotta, Charitas (Oratorio del Rosario di San Domenico, Palermo) · Fabrizio Garrisi (CC BY-SA 4.0)" },
 
   { id: 29, cat: "art", year: 1908, lat: 38.1454, lng: 13.3702,
     title_it: "Il ciclo pittorico di Villa Igiea",
@@ -235,7 +235,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il ciclo di Ettore de Maria Bergler nella sala di Villa Igiea è uno dei massimi esempi di Art Nouveau al mondo.",
     body_en: "Ettore de Maria Bergler's hall cycle at Villa Igiea is one of the world's greatest Art Nouveau examples.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/51/Villa_Igiea_a_Palermo_salone_liberty.jpg/960px-Villa_Igiea_a_Palermo_salone_liberty.jpg",
-    source: "Wikimedia Commons — Villa Igiea salone liberty (Sala Basile)" },
+    source: "Wikimedia Commons — Villa Igiea salone liberty (Sala Basile) · Wolfgang Moroder (CC BY-SA 3.0)" },
 
   { id: 30, cat: "art", year: 1601, lat: 38.1178, lng: 13.3702,
     title_it: "I graffiti dell'Inquisizione",
@@ -243,7 +243,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Non esistono altri esempi al mondo dei graffiti rinvenuti nel Palazzo della Santa Inquisizione.",
     body_en: "Nowhere else on Earth survive graffiti like those found in the Palace of the Holy Inquisition.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6b/Graffiti_prigione_Palazzo_Steri_01.jpg/960px-Graffiti_prigione_Palazzo_Steri_01.jpg",
-    source: "Wikimedia Commons — Graffiti dei prigionieri, carcere dell'Inquisizione, Palazzo Steri (Palermo)" },
+    source: "Wikimedia Commons — Graffiti dei prigionieri, carcere dell'Inquisizione, Palazzo Steri (Palermo) · Davide Mauro (CC BY-SA 4.0)" },
 
   { id: 31, cat: "hist", year: 1200, lat: 38.1365, lng: 13.3663,
     title_it: "Il Mikveh di Palazzo Marchese",
@@ -258,7 +258,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Nel 1801 Giuseppe Piazzi scoprì da Palermo Cerere, oggi pianeta nano visitato dalla sonda Dawn della NASA nel 2015.",
     body_en: "In 1801 Giuseppe Piazzi discovered Ceres from Palermo — now a dwarf planet, visited by NASA's Dawn probe in 2015.",
     img: "https://upload.wikimedia.org/wikipedia/commons/5/58/Ceres_-_RC3_-_Haulani_Crater_%2822381131691%29.jpg",
-    source: "Wikimedia Commons — Cerere, sonda Dawn (NASA/JPL) · Justin Cowart (Public domain)" },
+    source: "Wikimedia Commons — Cerere, sonda Dawn (NASA/JPL) · Justin Cowart (pubblico dominio)" },
 
   { id: 33, cat: "food", year: 2015, lat: 38.1174, lng: 13.3637,
     title_it: "Capitale dello street food",
@@ -266,7 +266,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Secondo Forbes, Palermo è la prima città europea e la quinta al mondo per street food.",
     body_en: "Per Forbes, Palermo ranks first in Europe and fifth in the world for street food.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2c/Pane_ca_meusa_served_streetside_in_a_Palermo_market.jpg/960px-Pane_ca_meusa_served_streetside_in_a_Palermo_market.jpg",
-    source: "Wikimedia Commons — Palermo street food (pane ca' meusa, Ballarò market)" },
+    source: "Wikimedia Commons — Palermo street food (pane ca' meusa, Ballarò market) · Stephen Woolverton (CC BY-SA 3.0)" },
 
   { id: 34, cat: "nat", year: 1900, lat: 38.1212, lng: 13.3698,
     title_it: "Il porto più bello",
@@ -274,14 +274,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il porto di Palermo è stato eletto terzo più bello al mondo.",
     body_en: "Palermo's port has been ranked the world's third most beautiful.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/La_cala_dall%27alto.jpg/960px-La_cala_dall%27alto.jpg",
-    source: "Wikimedia Commons — La Cala, Palermo (porto turistico)" },
+    source: "Wikimedia Commons — La Cala, Palermo (porto turistico) · Civa61 (CC BY-SA 3.0)" },
 
   { id: 35, cat: "hist", year: 1599, lat: 38.1118, lng: 13.3392,
     title_it: "Le Catacombe dei Cappuccini",
     title_en: "The Capuchin Catacombs",
     body_it: "Oltre 8.000 corpi mummificati: il più importante archivio antropologico al mondo.",
     body_en: "Over 8,000 mummified bodies — the world's most important anthropological archive.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/4/4b/Interguglielmi%2C_Eugenio_%281850-1911%29_-_n._0342_-_Catacombs%2C_Convento_dei_Cappuccini%2C_Palermo_-_Catacombe_dei_Cappuccini_-_MET_DP360605.jpg/960px-Interguglielmi%2C_Eugenio_%281850-1911%29_-_n._0342_-_Catacombs%2C_Convento_dei_Cappuccini%2C_Palermo_-_Catacombe_dei_Cappuccini_-_MET_DP360605.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4b/Interguglielmi%2C_Eugenio_%281850-1911%29_-_n._0342_-_Catacombs%2C_Convento_dei_Cappuccini%2C_Palermo_-_Catacombe_dei_Cappuccini_-_MET_DP360605.jpg/960px-Interguglielmi%2C_Eugenio_%281850-1911%29_-_n._0342_-_Catacombs%2C_Convento_dei_Cappuccini%2C_Palermo_-_Catacombe_dei_Cappuccini_-_MET_DP360605.jpg",
     source: "Wikimedia Commons — Catacombe dei Cappuccini · Eugenio Interguglielmi (CC0)" },
 
   { id: 36, cat: "arch", year: 1180, lat: 38.1168, lng: 13.3411,
@@ -289,8 +289,8 @@ window.Bh.data.CURIOSITIES = [
     title_en: "The Zisa and the Cuba",
     body_it: "Unici esempi in Europa di architettura islamica medievale fusa con lo stile normanno.",
     body_en: "The only European examples of medieval Islamic architecture blended with the Norman style.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/a4/Palermo-Zisa-bjs2007-02.jpg/960px-Palermo-Zisa-bjs2007-02.jpg",
-    source: "Wikimedia Commons — La Zisa" },
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/Palermo-Zisa-bjs2007-02.jpg/960px-Palermo-Zisa-bjs2007-02.jpg",
+    source: "Wikimedia Commons — La Zisa · Bjs (CC0)" },
 
   { id: 37, cat: "art", year: 1710, lat: 38.1199, lng: 13.3651,
     title_it: "Gli Oratori di Serpotta",
@@ -298,7 +298,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Gli stucchi degli Oratori del Rosario di Santa Cita e di San Domenico sono fra i vertici del Barocco europeo in stucco.",
     body_en: "The stuccoes of the Rosary Oratories of Santa Cita and San Domenico are among Europe's peaks of Baroque stucco.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/45/1.1_Giacomo_Serpotta%2C_Cristo_tra_i_Dottori%2C_Oratorio_del_Rosario_di_S._Cita_Palermo_-FG.jpg/960px-1.1_Giacomo_Serpotta%2C_Cristo_tra_i_Dottori%2C_Oratorio_del_Rosario_di_S._Cita_Palermo_-FG.jpg",
-    source: "Wikimedia Commons — Stucchi di Serpotta, Oratorio del Rosario di Santa Cita" },
+    source: "Wikimedia Commons — Stucchi di Serpotta, Oratorio del Rosario di Santa Cita · Fabrizio Garrisi (CC BY-SA 4.0)" },
 
   { id: 38, cat: "art", year: 1148, lat: 38.1147, lng: 13.3629,
     title_it: "I mosaici della Martorana",
@@ -306,14 +306,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "I mosaici bizantini di Santa Maria dell'Ammiraglio sono fra i più antichi e meglio conservati d'Europa.",
     body_en: "The Byzantine mosaics of Santa Maria dell'Ammiraglio are among Europe's oldest and best preserved.",
     img: "https://upload.wikimedia.org/wikipedia/commons/f/fb/Martorana_RogerII.jpg",
-    source: "Wikimedia Commons — Martorana" },
+    source: "Wikimedia Commons — Martorana · Urban (CC BY-SA 3.0)" },
 
   { id: 39, cat: "nat", year: 1787, lat: 38.1661, lng: 13.3538, altitude: 600,
     title_it: "Monte Pellegrino",
     title_en: "Mount Pellegrino",
     body_it: "Goethe lo definì «il più bel promontorio del mondo».",
     body_en: "Goethe called it \"the most beautiful promontory in the world.\"",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/b/bd/Mount_Pellegrino_from_the_northern_cliff_of_Mondello_Bay.jpg/960px-Mount_Pellegrino_from_the_northern_cliff_of_Mondello_Bay.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bd/Mount_Pellegrino_from_the_northern_cliff_of_Mondello_Bay.jpg/960px-Mount_Pellegrino_from_the_northern_cliff_of_Mondello_Bay.jpg",
     source: "Wikimedia Commons — Monte Pellegrino da Mondello · Joefromthebay (CC BY-SA 4.0)" },
 
   { id: 40, cat: "sci", year: -200000, lat: 38.1144, lng: 13.3678,
@@ -322,14 +322,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Il Museo Gemmellaro custodisce fossili unici al mondo, fra cui l'Elephas falconeri, l'elefante nano di Sicilia.",
     body_en: "The Gemmellaro Museum holds fossils unique on Earth, including Elephas falconeri, the dwarf elephant of Sicily.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Palaeoloxodon_falconeri_%28Sicilian_dwarf_elephant%29.jpg/960px-Palaeoloxodon_falconeri_%28Sicilian_dwarf_elephant%29.jpg",
-    source: "Wikimedia Commons — Palaeoloxodon (Elephas) falconeri, Sicilian dwarf elephant skeleton" },
+    source: "Wikimedia Commons — Palaeoloxodon (Elephas) falconeri, Sicilian dwarf elephant skeleton · James St. John (CC BY 2.0)" },
 
   { id: 41, cat: "food", year: 800, lat: 38.1140, lng: 13.3582,
     title_it: "Ballarò, Vucciria, Capo",
     title_en: "Ballarò, Vucciria, Capo",
     body_it: "Tre fra i mercati più antichi e vivi d'Europa, voce e respiro continuo della città.",
     body_en: "Three of Europe's oldest and liveliest markets — Palermo's continuous voice and breath.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/c/ca/Mercato_di_Ballar%C3%B2_-_panoramio.jpg/960px-Mercato_di_Ballar%C3%B2_-_panoramio.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ca/Mercato_di_Ballar%C3%B2_-_panoramio.jpg/960px-Mercato_di_Ballar%C3%B2_-_panoramio.jpg",
     source: "Wikimedia Commons — Mercato di Ballarò · ildirettore (CC BY 3.0)" },
 
   { id: 42, cat: "hist", year: 1624, lat: 38.1680, lng: 13.3519, altitude: 500,
@@ -338,7 +338,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Tra le più grandi feste religiose d'Europa, nata nel 1624 e ancora vissuta con partecipazione popolare unica.",
     body_en: "Among Europe's largest religious feasts, born in 1624 and still lived with unmatched popular participation.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/dc/Carro_trionfale_-_Flickr_-_Rino_Porrovecchio.jpg/960px-Carro_trionfale_-_Flickr_-_Rino_Porrovecchio.jpg",
-    source: "Wikimedia Commons — Festino di Santa Rosalia (carro trionfale)" },
+    source: "Wikimedia Commons — Festino di Santa Rosalia (carro trionfale) · Rino Porrovecchio (CC BY-SA 2.0)" },
 
   { id: 43, cat: "hist", year: -734, lat: 38.1207, lng: 13.3683,
     title_it: "Pan-ormos, tutto-porto",
@@ -346,14 +346,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Fondata dai Fenici nel 734 a.C. e ribattezzata dai Greci «la città tutto-porto», fra i più antichi scali del Mediterraneo occidentale ancora in uso.",
     body_en: "Founded by Phoenicians in 734 BC, renamed by Greeks \"the all-harbour city\" — among the oldest western-Mediterranean seaports still in use.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/ce/Palermo_La_Cala_%2826246296897%29.jpg/960px-Palermo_La_Cala_%2826246296897%29.jpg",
-    source: "Wikimedia Commons — La Cala, Palermo's ancient port" },
+    source: "Wikimedia Commons — La Cala, Palermo's ancient port · Jorge Franganillo (CC BY 2.0)" },
 
   { id: 44, cat: "arch", year: 1636, lat: 38.1129, lng: 13.3616,
     title_it: "Il Gesù (Casa Professa)",
     title_en: "Il Gesù (Casa Professa)",
     body_it: "Uno dei massimi esempi di Barocco al mondo.",
     body_en: "One of the world's greatest Baroque interiors.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/e/eb/Casa_Professa_%28Palermo%29_14_07_2019_21.jpg/960px-Casa_Professa_%28Palermo%29_14_07_2019_21.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Casa_Professa_%28Palermo%29_14_07_2019_21.jpg/960px-Casa_Professa_%28Palermo%29_14_07_2019_21.jpg",
     source: "Wikimedia Commons — Chiesa del Gesù (Casa Professa) · Effems (CC BY-SA 4.0)" },
 
   { id: 45, cat: "art", year: 1400, lat: 38.1185, lng: 13.3706,
@@ -362,7 +362,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Patrimonio Immateriale dell'Umanità UNESCO: radici medievali e valore universale nella trasmissione orale dei miti cavallereschi.",
     body_en: "UNESCO Intangible Heritage: medieval roots and universal value in the oral transmission of chivalric myths.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/00/Pupi_siciliani_di_palermo.JPG/960px-Pupi_siciliani_di_palermo.JPG",
-    source: "Wikimedia Commons — Opera dei Pupi, Palermo" },
+    source: "Wikimedia Commons — Opera dei Pupi, Palermo · HowRapid (pubblico dominio)" },
 
   { id: 46, cat: "nat", year: 2024, lat: 38.1180, lng: 13.3500,
     title_it: "2.700 ore di sole",
@@ -370,14 +370,14 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Con oltre 2.700 ore di sole l'anno, Palermo è fra le 10 città più assolate d'Europa.",
     body_en: "With over 2,700 hours of sunshine per year, Palermo is among the 10 sunniest cities in Europe.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2d/Foro_Italico_Palermo_BDSC5615.jpg/960px-Foro_Italico_Palermo_BDSC5615.jpg",
-    source: "Wikimedia Commons — Foro Italico, Palermo" },
+    source: "Wikimedia Commons — Foro Italico, Palermo · Eugenii (CC BY-SA 4.0)" },
 
   { id: 47, cat: "arch", year: 850, lat: 38.1112, lng: 13.3532,
     title_it: "Il Palazzo dei Normanni",
     title_en: "The Norman Palace",
     body_it: "Costruito nel IX secolo, è la più antica residenza reale d'Europa.",
     body_en: "Built in the 9th century, the oldest royal residence in Europe.",
-    img: "https://thumb.wikimedia.org/wikipedia/commons/thumb/a/af/Palazzo_Normanni%2C_vista%2C_Palermo.jpg/960px-Palazzo_Normanni%2C_vista%2C_Palermo.jpg",
+    img: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/af/Palazzo_Normanni%2C_vista%2C_Palermo.jpg/960px-Palazzo_Normanni%2C_vista%2C_Palermo.jpg",
     source: "Wikimedia Commons — Palazzo dei Normanni · Archeologo (CC BY-SA 4.0)" },
 
   { id: 48, cat: "art", year: 1900, lat: 38.1196538, lng: 13.3436586,
@@ -386,7 +386,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Palermo vanta una scuola Liberty autonoma, non un'imitazione di quella francese.",
     body_en: "Palermo boasts an autonomous Art Nouveau school — not a derivative of the French.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9e/Villino_Florio_%28Palermo%29_01.jpg/960px-Villino_Florio_%28Palermo%29_01.jpg",
-    source: "Wikimedia Commons — Villino Florio, Palermo (Ernesto Basile, Liberty)" },
+    source: "Wikimedia Commons — Villino Florio, Palermo (Ernesto Basile, Liberty) · Davide Mauro (CC BY-SA 4.0)" },
 
   { id: 49, cat: "hist", year: 1906, lat: 37.9180, lng: 13.7390,
     title_it: "La Targa Florio",
@@ -394,7 +394,7 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Fondata nel 1906, è la più antica corsa automobilistica al mondo ancora disputata.",
     body_en: "Founded in 1906, the oldest motor race in the world still being contested.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2e/1970_Targa_Florio_-_Gulf_Porsche.jpg/960px-1970_Targa_Florio_-_Gulf_Porsche.jpg",
-    source: "Wikimedia Commons — Targa Florio (1970, Madonie circuit)" },
+    source: "Wikimedia Commons — Targa Florio (1970, Madonie circuit) · autore sconosciuto (pubblico dominio)" },
 
   { id: 50, cat: "sci", year: 1980, lat: 38.1083, lng: 13.3520,
     title_it: "Il fisico Antonio Zichichi",
@@ -402,5 +402,5 @@ window.Bh.data.CURIOSITIES = [
     body_it: "Laureato all'Università di Palermo, è considerato fra i più importanti fisici del Novecento.",
     body_en: "A graduate of the University of Palermo, considered among the most important physicists of the 20th century.",
     img: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/99/Antonino_Zichichi_2008.JPG/960px-Antonino_Zichichi_2008.JPG",
-    source: "Wikimedia Commons — Antonino Zichichi" },
+    source: "Wikimedia Commons — Antonino Zichichi · Antonio G Colombo (pubblico dominio)" },
 ];
