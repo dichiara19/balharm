@@ -154,23 +154,21 @@ window.Bh.map = window.Bh.map || {};
     // view's tiles fully loaded (tilesLoaded — the only moment sampleHeight
     // sees full-detail geometry; a pin locks on its first valid sample).
     // Triggered by allTilesLoaded and by camera moveEnd, whichever comes
-    // last. Each pass only samples pins that are in view and still unlocked
-    // or due a refinement (see pins.sampleGroundFor: a locked pin is
-    // re-sampled, raise only, when the camera comes much closer), so it costs
-    // nothing for the rest; once none needs a sample the listeners go away.
-    // Chunked (2 pins per task, 17 samples each) so a pass never stalls the
-    // main thread; a camera move aborts it until the next rest.
+    // last. Each pass only samples pins still unlocked *and* in view (see
+    // pins.sampleGroundFor), so it costs nothing for the rest; once all are
+    // locked the listeners go away. Chunked (5 pins per task) so a pass never
+    // stalls the main thread; a camera move aborts it until the next rest.
     let sampling = false, cameraMoving = false, roofsLocked = false;
     function sampleRoofs() {
       if (sampling || roofsLocked || cameraMoving || !baseTileset?.tilesLoaded) return;
       sampling = true;
       (function chunk(i) {
         if (cameraMoving) { sampling = false; return; }
-        for (let n = 0; n < 2 && i < items.length; n++, i++) pins.sampleGroundFor(items[i], sampleExclude);
+        for (let n = 0; n < 5 && i < items.length; n++, i++) pins.sampleGroundFor(items[i], sampleExclude);
         if (i < items.length) { setTimeout(() => chunk(i), 0); return; }
         lightsMod.repositionAll(stageLights, scene, sampleExclude);
         sampling = false;
-        const pending = items.filter((c) => pins.needsSample(c)).length
+        const pending = items.filter((c) => !pins.pinData[c.id]?.sampled).length
           + Object.values(stageLights).filter((l) => !l.sampled).length;
         if (pending === 0) {
           roofsLocked = true;
