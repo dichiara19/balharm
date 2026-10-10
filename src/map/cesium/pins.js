@@ -23,11 +23,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   // Tune if the reference model uses a different origin.
   const BELL_SCALE       = 14;
   const BELL_HALF_HEIGHT = 7;
-  // Clearance above the sampled rooftop. The cross-sampler in
-  // sampleGroundFor already picks the *highest* surrounding point, so we
-  // don't need a huge buffer on top — 8m is enough for the bell to read as
-  // "perched on the roof" without floating like a skyscraper antenna.
-  const BELL_GROUND_OFFSET = 8;
+  // Clearance above the sampled rooftop. 8 m let bells graze domes, towers
+  // and roofs between the sample points; 20 m keeps them clear everywhere.
+  const BELL_GROUND_OFFSET = 20;
+  // Far away, minimumPixelSize enlarges the bell around its centre, so the
+  // lower half grows down into the roof: cap the enlargement at 3× (was 5×).
+  const BELL_MAX_SCALE = BELL_SCALE * 3;
 
   // Per-category coloured aura ("shadow") on the rooftop under each bell.
   // The model itself keeps its native texture; the aura carries the theme.
@@ -251,7 +252,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
           uri: BELL_MODEL_URI,
           scale: BELL_SCALE,
           minimumPixelSize: 32,
-          maximumScale: BELL_SCALE * 5,
+          maximumScale: BELL_MAX_SCALE,
           runAnimations: false,
           // Keep the glTF's PBR shading visible — earlier we forced MIX with
           // a flat gold, which averaged lit and shaded pixels together and
@@ -321,7 +322,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
           uri: BELL_MODEL_URI,
           scale: BELL_SCALE * 1.12,
           minimumPixelSize: 40,
-          maximumScale: BELL_SCALE * 5,
+          maximumScale: BELL_MAX_SCALE,
           runAnimations: false,
           lightColor: new Cesium.Cartesian3(1.6, 1.5, 1.2),
           colorBlendMode: Cesium.ColorBlendMode.HIGHLIGHT,
