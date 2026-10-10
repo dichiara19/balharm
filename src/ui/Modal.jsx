@@ -3,6 +3,16 @@ window.Bh = window.Bh || {};
 window.Bh.ui = window.Bh.ui || {};
 
 (function () {
+  const { useState, useEffect } = React;
+
+  // Commons file page for a upload.wikimedia.org / thumb.wikimedia.org URL,
+  // so the credit can link to the licence and full attribution.
+  function commonsPage(url) {
+    const m = url && (url.match(/\/commons\/thumb\/[0-9a-f]\/[0-9a-f]{2}\/([^/?]+)\//)
+                   || url.match(/\/commons\/[0-9a-f]\/[0-9a-f]{2}\/([^/?]+)$/));
+    return m ? `https://commons.wikimedia.org/wiki/File:${m[1]}` : null;
+  }
+
   function MiniMap({ item }) {
     const z = 15;
     const lng2tx = (lng) => ((lng + 180) / 360) * Math.pow(2, z);
@@ -74,12 +84,10 @@ window.Bh.ui = window.Bh.ui || {};
     const { Star } = window.Bh.ui;
     const { fmtYear } = window.Bh.lib.format;
     const cat = window.Bh.data.CATEGORIES.find(c => c.id === item.cat);
-    // On mobile the modal is hosted inside a BottomSheet (no scrim wrapper).
-    const Wrapper = ({ children }) => mobile
-      ? <div className={`modal modal-mobile${inTour ? " in-tour" : ""}`}>{children}</div>
-      : <div className="scrim" onClick={onClose}>
-          <div className="modal" onClick={(e) => e.stopPropagation()}>{children}</div>
-        </div>;
+    // Photo credit sits behind an (i) on the image; closed on every new item.
+    const [creditOpen, setCreditOpen] = useState(false);
+    useEffect(() => { setCreditOpen(false); }, [item.id]);
+    const creditUrl = commonsPage(item.img);
     // Mobile puts title + theme above the photo: at the peek snap the sheet
     // shows what the curiosity is while the camera flies to it.
     const head = (
@@ -98,8 +106,8 @@ window.Bh.ui = window.Bh.ui || {};
         </div>
       </>
     );
-    return (
-      <Wrapper>
+    const content = (
+      <>
           <button className="close" onClick={onClose} aria-label={t.closeAria}>×</button>
           {mobile && <div className="m-head">{head}</div>}
           <div className={`img${item.img ? "" : " no-img"}`}>
@@ -117,7 +125,20 @@ window.Bh.ui = window.Bh.ui || {};
                 <div style={{marginTop:14, fontSize: 9}}>{t.placeholderLabel}</div>
               </div>
             </div>
-            {item.source && <div className="src">{t.sourceLabel}: {item.source}</div>}
+            {item.source && (
+              <div className={`credit${creditOpen ? " open" : ""}`}>
+                {creditOpen && (
+                  <div className="credit-text" id={`credit-${item.id}`}>
+                    {t.sourceLabel}: {item.source}
+                    {creditUrl && <> · <a href={creditUrl} target="_blank" rel="noreferrer">{t.creditLink}</a></>}
+                  </div>
+                )}
+                <button type="button" className="credit-btn"
+                        aria-label={t.creditAria} aria-expanded={creditOpen}
+                        aria-controls={`credit-${item.id}`}
+                        onClick={() => setCreditOpen((o) => !o)}>i</button>
+              </div>
+            )}
             <MiniMap item={item} />
           </div>
           <div className="body">
@@ -133,8 +154,16 @@ window.Bh.ui = window.Bh.ui || {};
               </a>
             </div>
           </div>
-      </Wrapper>
+      </>
     );
+    // Plain elements, not an inner wrapper component: a component defined in
+    // render is a new type every render, which remounted the whole card (and
+    // re-decoded the photo) on any state change.
+    return mobile
+      ? <div className={`modal modal-mobile${inTour ? " in-tour" : ""}`}>{content}</div>
+      : <div className="scrim" onClick={onClose}>
+          <div className="modal" onClick={(e) => e.stopPropagation()}>{content}</div>
+        </div>;
   }
 
   // Memoise the modal so root re-renders triggered by the live camera
