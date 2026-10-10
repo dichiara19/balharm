@@ -11,3 +11,12 @@ node_modules/
 skills-lock.json
 .perf/
 dist/
+# Claude Code: CLAUDE.md resta locale; versionati .claude/settings.json, hooks, agents e le
+# skill scritte per il progetto; locali le impostazioni personali, i worktree
+# degli agenti e le skill di terze parti (reinstallabili da skills-lock.json).
+CLAUDE.md
+.claude/settings.local.json
+.claude/worktrees/
+.claude/skills/*
+!.claude/skills/preview-prod/
+!.claude/skills/perf-trace/
