@@ -24,8 +24,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   const BELL_SCALE       = 14;
   const BELL_HALF_HEIGHT = 7;
   // Clearance above the sampled rooftop. 8 m let bells graze domes, towers
-  // and roofs between the sample points; 20 m keeps them clear everywhere.
-  const BELL_GROUND_OFFSET = 20;
+  // and roofs between the sample points; 20 m kept them clear; 40 m (user
+  // call, Oct 2026) floats them well above the skyline so they read as
+  // markers rather than rooftop objects.
+  const BELL_GROUND_OFFSET = 40;
   // Far away, minimumPixelSize enlarges the bell around its centre, so the
   // lower half grows down into the roof: cap the enlargement at 3× (was 5×).
   const BELL_MAX_SCALE = BELL_SCALE * 3;
