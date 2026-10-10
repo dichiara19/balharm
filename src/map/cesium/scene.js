@@ -189,6 +189,9 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     ssc.inertiaZoom = 0.7;
     ssc.inertiaTranslate = 0.8;
     ssc.inertiaSpin = 0.8;
+    // Two-finger gestures: our own Google-Earth-style pinch (touch.js)
+    // replaces Cesium's combined zoom+tilt PINCH.
+    window.Bh.map.cesium.touch.installPinch(viewer);
 
     viewer.cesiumWidget.creditContainer.style.display = "none";
 
