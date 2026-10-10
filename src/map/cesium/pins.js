@@ -13,7 +13,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
 
   // ── Asset paths ──────────────────────────────────────────────────────────
   const BELL_MODEL_URI = "uploads/elements/bell.glb";
-  const BELL_FILENAME  = "Single_small_brass_h_#4-1778336929730.mp3";
+  const BELL_FILENAME  = "bell-ring.mp3";
   const BELL_AUDIO_URL = "uploads/sounds/" + encodeURIComponent(BELL_FILENAME);
 
   // ── Geometry constants ───────────────────────────────────────────────────
