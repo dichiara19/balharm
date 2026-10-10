@@ -15,7 +15,7 @@
 # Argomenti opzionali (percorsi da convertire con wslpath -w):
 #   -- [sorgente hi-poly] [GLB di uscita] [knob|ring] [lato texture]
 # Default: assets-src/bell-hires.glb (deve restare nel repo, fuori da
-# uploads/ che viene servito), uploads/elements/bell.glb, "knob" (pomello +
+# public/ che viene servito), public/uploads/elements/bell.glb, "knob" (pomello +
 # collo tornito + guglia a perline come l'originale; "ring" = anello), 512.
 # Le texture intermedie (PNG) vengono scritte in una cartella temporanea,
 # il cui percorso è stampato in console.
@@ -27,7 +27,7 @@ import tempfile
 argv = sys.argv[sys.argv.index("--") + 1:] if "--" in sys.argv else []
 REPO = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 SRC_GLB = argv[0] if len(argv) > 0 else os.path.join(REPO, "assets-src", "bell-hires.glb")
-OUT_GLB = argv[1] if len(argv) > 1 else os.path.join(REPO, "uploads", "elements", "bell.glb")
+OUT_GLB = argv[1] if len(argv) > 1 else os.path.join(REPO, "public", "uploads", "elements", "bell.glb")
 HANDLE = argv[2] if len(argv) > 2 else "knob"
 TEX = int(argv[3]) if len(argv) > 3 else 512
 assert HANDLE in ("knob", "ring"), HANDLE
