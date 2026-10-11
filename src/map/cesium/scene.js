@@ -191,7 +191,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     ssc.inertiaSpin = 0.8;
     // Two-finger gestures: our own Google-Earth-style pinch (touch.js)
     // replaces Cesium's combined zoom+tilt PINCH.
-    window.Bh.map.cesium.touch.installPinch(viewer);
+    const pinch = window.Bh.map.cesium.touch.installPinch(viewer);
+    // A render error no longer leaves the map black behind Cesium's panel:
+    // it's reported and the loop restarts (recovery.js).
+    window.Bh.map.cesium.recovery.install(viewer, { isPinching: pinch.isActive });
 
     viewer.cesiumWidget.creditContainer.style.display = "none";
 

@@ -27,6 +27,10 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   const LOCK_PX = 10;             // movement before the gesture picks a mode
   const TWIST_START = Cesium.Math.toRadians(8); // twist ignored until this much
 
+  // A NaN written into the camera poisons Cesium's near/far planes and stops
+  // rendering ("Invalid array length"): nothing non-finite reaches it.
+  const finite3 = (c) => !!c && Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.z);
+
   function installPinch(viewer) {
     const scene = viewer.scene, camera = viewer.camera, canvas = scene.canvas;
     const ssc = scene.screenSpaceCameraController;
@@ -71,12 +75,12 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     function pickPivot(mx, my) {
       win.x = mx; win.y = my;
       let p = scene.pickPositionSupported ? scene.pickPosition(win, g.pivot) : undefined;
-      if (!Cesium.defined(p)) p = camera.pickEllipsoid(win, ellipsoid, g.pivot);
-      if (!Cesium.defined(p)) {
+      if (!finite3(p)) p = camera.pickEllipsoid(win, ellipsoid, g.pivot);
+      if (!finite3(p)) {
         win.x = canvas.clientWidth / 2; win.y = canvas.clientHeight / 2;
         p = camera.pickEllipsoid(win, ellipsoid, g.pivot);
       }
-      if (!Cesium.defined(p)) return false;
+      if (!finite3(p)) return false;
       ellipsoid.geodeticSurfaceNormal(g.pivot, g.up);
       Cesium.Transforms.eastNorthUpToFixedFrame(g.pivot, ellipsoid, g.frame);
       return true;
@@ -95,8 +99,9 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       if (elevPerM > 1e-3) {
         minRange = Math.max(minRange, MIN_CLEARANCE / elevPerM);
         // Cesium's maximumZoomDistance no longer applies to pinch: cap height.
-        const pivotH = Cesium.Cartographic.fromCartesian(g.pivot, ellipsoid, pivotCarto).height;
-        maxRange = Math.min(maxRange, (MAX_HEIGHT - pivotH) / elevPerM);
+        const pivotC = Cesium.Cartographic.fromCartesian(g.pivot, ellipsoid, pivotCarto);
+        if (!pivotC) return;
+        maxRange = Math.min(maxRange, (MAX_HEIGHT - pivotC.height) / elevPerM);
       }
       // Limits only stop motion in their own direction: a camera already
       // outside them (far pivot near the horizon, close after a flyTo) is
@@ -108,13 +113,15 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       if (next === range) return;
       Cesium.Cartesian3.multiplyByScalar(off, next / range, off);
       Cesium.Cartesian3.add(g.pivot, off, pos);
+      if (!finite3(pos)) return;
       Cesium.Cartesian3.clone(pos, camera.position);
     }
 
     // Heading and tilt both rotate the camera around the pivot, in its
     // east-north-up frame. Pitch is read in world space (inside the lookAt
     // frame camera.pitch is not the real one); a tilt step that would leave
-    // the pitch range or drop below MIN_CLEARANCE is rolled back whole.
+    // the pitch range or drop below MIN_CLEARANCE is rolled back whole, and so
+    // is any step that leaves the camera non-finite.
     const saved = {
       position: new Cesium.Cartesian3(), direction: new Cesium.Cartesian3(),
       up: new Cesium.Cartesian3(), right: new Cesium.Cartesian3(),
@@ -136,14 +143,18 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       if (dPitch) {
         const p = camera.pitch;
         d = Cesium.Math.clamp(p + dPitch, MIN_PITCH, MAX_PITCH) - p;
-        save();
       }
+      save();
       camera.lookAtTransform(g.frame);
       // rotate(axis, a) turns the camera by -a about the pivot's vertical.
       if (dHeading) camera.rotate(Cesium.Cartesian3.UNIT_Z, dHeading);
       // rotateUp lifts the view toward the horizon (pitch rises).
       if (d) camera.rotateUp(d);
       camera.lookAtTransform(Cesium.Matrix4.IDENTITY);
+      if (!finite3(camera.position) || !finite3(camera.direction) || !finite3(camera.up)) {
+        restore();
+        return;
+      }
       if (d) {
         const p = camera.pitch;
         if (p > MAX_PITCH + 1e-3 || p < MIN_PITCH - 1e-3 ||
@@ -210,6 +221,9 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     canvas.addEventListener("touchmove", onMove, { passive: true });
     canvas.addEventListener("touchend", onEnd, { passive: true });
     canvas.addEventListener("touchcancel", onEnd, { passive: true });
+
+    // For the render-error report: was a two-finger gesture under way?
+    return { isActive: () => g.active };
   }
 
   window.Bh.map.cesium.touch = { installPinch };
