@@ -5,7 +5,8 @@
    array length" (a NaN reaching the multi-frustum split, Oct 2026).
    Every such error now goes to analytics with the top of its stack, and the
    map recovers on its own: a non-finite camera is put back on the last good
-   frame, any flight is cancelled and the render loop restarts. Errors that
+   frame, any flight is cancelled, an entity whose bounds went non-finite is
+   hidden, and the render loop restarts. Errors that
    keep coming back are not looped on forever: past the budget Cesium's own
    panel shows, as before. */
 window.Bh = window.Bh || {};
@@ -69,37 +70,79 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       Cesium.Cartesian3.clone(good.right, camera.right);
     }
 
+    // A NaN can also sit in one primitive's bounds with the camera fine. The
+    // failed frame's commands are still in frameState.commandList (cleared
+    // when the next frame starts): find the first with non-finite bounds.
+    const finiteBounds = (b) => finite3(b.center) &&
+      (b.radius === undefined || Number.isFinite(b.radius)) &&
+      (!b.halfAxes || Cesium.Matrix3.toArray(b.halfAxes).every(Number.isFinite));
+    function badCommand() {
+      const list = scene.frameState.commandList;
+      for (let i = 0; i < list.length; i++) {
+        const b = list[i].boundingVolume;
+        if (b && !finiteBounds(b)) return list[i];
+      }
+      return null;
+    }
+
     // Both of Cesium's render-loop error paths (an error inside scene.render
     // and one thrown by a pre/postRender listener) end in showErrorPanel, with
     // the loop already stopped: this is the one seam that sees them all.
     let recent = [];
+    let restartPending = false;
     widget.showErrorPanel = function (title, message, error) {
       const now = performance.now();
       recent = recent.filter((t) => now - t < WINDOW_MS);
       recent.push(now);
       const cameraOk = cameraFinite();
       const recover = recent.length <= MAX_RECOVERIES && (cameraOk || good.valid);
+      // Model entities: the command's owner is the Model, whose id is the
+      // entity. Batched geometry (ellipses, cylinders) has no single owner.
+      let bad = null, badEntity = null;
+      try {
+        bad = badCommand();
+        const id = bad && bad.owner && bad.owner.id;
+        if (id instanceof Cesium.Entity) badEntity = id;
+      } catch (e) { /* diagnosis is best effort */ }
 
       console.error("[Bh] render error:", error);
       try {
         window.Bh.track?.(window.Bh.lib.analytics.EVENTS.RENDER_ERROR, Object.assign(errorParams(error), {
           camera_ok: cameraOk,
+          bad_owner: badEntity ? String(badEntity.id).slice(0, 100) : (bad ? "primitive" : ""),
+          cesium_v: Cesium.VERSION,
           pinch: !!(opts.isPinching && opts.isPinching()),
           recovered: recover,
           count: recent.length,
         }));
       } catch (e) { /* telemetry never blocks recovery */ }
 
-      if (!recover) { showPanel(title, message, error); return; }
+      if (!recover) {
+        // Giving up: a restart still pending would revive the loop behind
+        // the panel.
+        restartPending = false;
+        showPanel(title, message, error);
+        return;
+      }
 
       try {
         camera.cancelFlight();
         if (!cameraOk) restoreCamera();
-      } catch (e) { console.warn("[Bh] camera reset failed:", e); }
-      // Restart on a later frame: the stopped loop may still have one
-      // requestAnimationFrame pending, which ends it when it sees the flag
-      // off. Registered after it, ours runs after it, so only one loop is left.
+        if (badEntity) {
+          badEntity.show = false;
+          console.warn(`[Bh] hid entity "${badEntity.id}": non-finite bounds`);
+        }
+      } catch (e) { console.warn("[Bh] recovery step failed:", e); }
+      // One restart at a time: two errors in the same frame (render + a
+      // listener) must not schedule two. Restart on a later frame: the
+      // stopped loop may still have one requestAnimationFrame pending, which
+      // ends it when it sees the flag off. Registered after it, ours runs
+      // after it, so only one loop is left.
+      if (restartPending) return;
+      restartPending = true;
       setTimeout(() => requestAnimationFrame(() => {
+        if (!restartPending || widget.isDestroyed()) return;
+        restartPending = false;
         widget.useDefaultRenderLoop = true;
         scene.requestRender();
         console.log("[Bh] render loop restarted");
