@@ -550,6 +550,8 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
           if (visN > 0) cd.entity.label.text = String(visN);
         }
       });
+      // Hidden by recovery.js for non-finite bounds: never shown again.
+      window.Bh.map.cesium.recovery.quarantine.forEach((e) => { e.show = false; });
       scene.requestRender();
     }
 

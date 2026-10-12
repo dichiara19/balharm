@@ -227,6 +227,7 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     const scratchCarto = new Cesium.Cartographic();
     scene.postRender.addEventListener(() => {
       const carto = Cesium.Cartographic.fromCartesian(viewer.camera.position, undefined, scratchCarto);
+      if (!carto) return;   // non-finite camera: recovery.js handles it
       const lng = Cesium.Math.toDegrees(carto.longitude), lat = Cesium.Math.toDegrees(carto.latitude);
       let cl = lng, ca = lat, changed = false;
       if (lng < BOUNDS.minLng) { cl = BOUNDS.minLng; changed = true; }

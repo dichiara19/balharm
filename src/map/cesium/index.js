@@ -349,6 +349,11 @@ window.Bh.map = window.Bh.map || {};
     // releases the lock and returns control immediately.
     let orbitStopper = null;
     let orbitJustReleasedAt = 0;
+    // After a render error the orbit stops (and gives inputs back) before
+    // the loop restarts, or it would replay the same pose every frame.
+    window.Bh.map.cesium.recovery.recovering.addEventListener(() => {
+      if (orbitStopper) orbitStopper();
+    });
     function flyAroundLandmark(L) {
       if (orbitStopper) orbitStopper();
       const roofH = (typeof L.altitude === "number") ? L.altitude : 35;

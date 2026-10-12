@@ -18,6 +18,13 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
   const WINDOW_MS = 30000;
   const RESTART_DELAY_MS = 200;
 
+  // Entities hidden for non-finite bounds stay hidden: pins.js refresh()
+  // re-applies show on every filter or cluster change and checks this set.
+  const quarantine = new Set();
+  // Raised before each restart, so per-frame camera drivers (the landmark
+  // orbit in index.js) stop instead of feeding the same error back in.
+  const recovering = new Cesium.Event();
+
   const finite3 = (c) => !!c && Number.isFinite(c.x) && Number.isFinite(c.y) && Number.isFinite(c.z);
 
   // GA4 caps parameter values at 100 characters: the message and the first
@@ -126,9 +133,11 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
       }
 
       try {
-        camera.cancelFlight();
-        if (!cameraOk) restoreCamera();
+        recovering.raiseEvent();
+        // A flight (a tour step) is only cut when it left the camera broken.
+        if (!cameraOk) { camera.cancelFlight(); restoreCamera(); }
         if (badEntity) {
+          quarantine.add(badEntity);
           badEntity.show = false;
           console.warn(`[Bh] hid entity "${badEntity.id}": non-finite bounds`);
         }
@@ -150,5 +159,5 @@ window.Bh.map.cesium = window.Bh.map.cesium || {};
     };
   }
 
-  window.Bh.map.cesium.recovery = { install };
+  window.Bh.map.cesium.recovery = { install, quarantine, recovering };
 })();
