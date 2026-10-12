@@ -17,6 +17,7 @@ import "./map/cesium/landmarks.js";
 import "./map/cesium/lights.js";
 import "./map/cesium/pins.js";
 import "./map/cesium/touch.js";
+import "./map/cesium/recovery.js";
 import "./map/cesium/index.js";
 
 // UI React
